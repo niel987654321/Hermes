@@ -100,6 +100,16 @@ module.exports = function (file) {
       }
     }
 
+    this.logout = (key) => {
+      console.log("********************");
+      console.log(key);
+      const insert = this.db.prepare(
+        "DELETE FROM Key WHERE key = @key; "
+      );
+      insert.run({ key });
+      return("success");
+    }
+
 
 
     

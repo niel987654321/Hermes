@@ -43,6 +43,15 @@ app.post("/login", async function (req, res) {
   res.send(result);
 });
 
+app.post("/logout", async function (req, res) {
+  console.log("%%%%%%%%%%%%");
+  console.log(req.body);
+  let {key} = req.body;
+  console.log(key);
+  const result = await db.logout(key);
+  res.send("Success");
+});
+
 app.post("/register_team", async function (req, res) {
   let result = await handle_register_team(req);
   if(result === "success"){
