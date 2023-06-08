@@ -14,8 +14,19 @@ document.getElementById("logout").addEventListener("click", () => {
 });
 
 function loadSandbox() {
-    var r = document.querySelector(':root');
-    r.style.setProperty('--blue', 100);
 }
 
 document.addEventListener("load", loadSandbox()); 
+
+let size = 100;
+function changeSize(change) {
+    if(change + size > 50 && change + size < 150){
+        size = change + size;
+        var r = document.querySelector(':root');
+        r.style.setProperty('--size', size + "px");    
+    }
+}
+
+document.getElementById("plus").addEventListener("click", () => {changeSize(10)})
+
+document.getElementById("minus").addEventListener("click", () => {changeSize(-10)})

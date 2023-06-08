@@ -69,12 +69,14 @@ button:hover {
 }
 
 :root {
-    --size: 10;
+    --size: 100px;
   }
 
 .team {
-    width: var(--size * 10);
+    height: var( --size);
 }
+
+
 
 #sandbox {
     height: 100%;
@@ -89,6 +91,8 @@ button:hover {
     text-align: center;
     border-radius: 50%;
     right: 10px;
-    
-    
+    bottom: 10px;
+}
+#plus {
+    bottom: 60px;
 }
