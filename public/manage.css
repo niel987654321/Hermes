@@ -3,6 +3,8 @@ header {
     background-color: gold;
     display: flex;
     align-items: center;
+    position: fixed;
+    width: 100%;
 }
 
 body {
@@ -76,8 +78,6 @@ button:hover {
     height: var( --size);
 }
 
-
-
 #sandbox {
     height: 100%;
     width: 100%;
@@ -95,4 +95,8 @@ button:hover {
 }
 #plus {
     bottom: 60px;
+}
+
+.relative{
+    position: relative;
 }
