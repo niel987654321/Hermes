@@ -9,19 +9,35 @@
 </head>
 <body>
     <header>
-        <button>
+        <button id="newPerson">
             Neue Person
         </button>
-        <button>
-            Neue Gruppe
+        <button id="newConfig">
+            Neue Config
         </button>
         <button id="logout" >Logout</button>
     </header>
+    <div></div>
+    <br>
+    <br>
+    <br>
     <div id="sandbox">
-        <div id="hello" class="team">Hello</div>
         <button id="plus" class="sizecontrol">+</button>
         <button id="minus" class="sizecontrol">-</button>
     </div>
+    <div id="configForm">
+        <p>Name:</p>
+        <input placeholder="name" id="configName">
+        <p>Ferientage:</p>
+        <input type="number" placeholder="Ferientage" id="configFerien">
+        <p>Arbeitsstunden pro Woche:</p>
+        <input type="number" placeholder="Arbeitsstunden" id="configArbeit">        
+        <button id="safeConfig">Speichern</button>
+        <button id="abbruchConfig">Abbruch</button>
+        <button id="deleteConfig"> Delete </button>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4"></script>
+    <script src="https://unpkg.com/konva@9/konva.min.js"></script>
     <script src="manage.js"></script>
 </body>
 </html>

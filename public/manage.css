@@ -1,102 +1,127 @@
-header {
-    height: 50px;
-    background-color: gold;
-    display: flex;
-    align-items: center;
-    position: fixed;
-    width: 100%;
-}
+    header {
+        height: 50px;
+        background-color: gold;
+        display: flex;
+        align-items: center;
+        position: fixed;
+        width: 100%;
+    }
 
-body {
-    text-align: center;  
-}
+    body {
+        text-align: center;  
+    }
 
-button {
-    height: 100%;
-    font-family: "Roboto", sans-serif;
-    text-transform: uppercase;
-    outline: 0;
-    background: gold;
-    border: 0;
-    padding: 15px;
-    color: #FFFFFF;
-    font-size: 14px;
-    -webkit-transition: all 0.3 ease;
-    transition: all 0.3 ease;
-    cursor: pointer;
-    width: 150px;
-  }
+    button {
+        height: 100%;
+        font-family: "Roboto", sans-serif;
+        text-transform: uppercase;
+        outline: 0;
+        background: gold;
+        border: 0;
+        padding: 15px;
+        color: #FFFFFF;
+        font-size: 14px;
+        -webkit-transition: all 0.3 ease;
+        transition: all 0.3 ease;
+        cursor: pointer;
+        width: 150px;
+    }
 
-header #logout {
-    margin-left: auto;
-    margin-right: 5%;
-    color: black;
-    font-size: 100%;
-    width: 100px;
-    text-decoration: none;
-}
+    header #logout {
+        margin-left: auto;
+        margin-right: 5%;
+        color: black;
+        font-size: 100%;
+        width: 100px;
+        text-decoration: none;
+    }
 
-body, html {
-    margin: 0;
-    height: 100%;
-    width: 100%;
-}
+    body, html {
+        margin: 0;
+        height: 100%;
+        width: 100%;
+    }
 
-#team {
-    margin-bottom: 10px;
-}
+    #team {
+        margin-bottom: 10px;
+    }
 
-#hermes {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-}
-
-@media (max-width: 1500px) {
     #hermes {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+    }
+
+    @media (max-width: 1500px) {
+        #hermes {
+            display: none;
+        }
+    }
+
+    @import url(https://fonts.googleapis.com/css?family=Roboto:300);
+
+
+    button:hover,.register button:active,.register button:focus {
+    background: gold;
+    
+    }
+
+    button:hover {
+        background: goldenrod;
+    }
+
+    :root {
+        --size: 100px;
+    }
+
+    .team {
+        height: var( --size);
+    }
+
+    #sandbox {
+        
+    }
+
+    .sizecontrol{
+        position: fixed;
+        padding: 0px;
+        width: 40px;
+        height: 40px;
+        text-align: center;
+        border-radius: 50%;
+        right: 10px;
+        bottom: 10px;
+    }
+    #plus {
+        bottom: 60px;
+    }
+
+    .draggable{
+        position: relative;
+        display: flex;
+        height: auto;
+        width: 20px;
+        border: 1px black solid;
+    }
+
+    #configForm {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border: 1px solid black;
+      }
+      
+      #configForm.active {
+        display: block;
+      }
+
+    #deleteConfig{
         display: none;
     }
-}
-
-@import url(https://fonts.googleapis.com/css?family=Roboto:300);
-
-
- button:hover,.register button:active,.register button:focus {
-  background: gold;
-  
-}
-
-button:hover {
-    background: goldenrod;
-}
-
-:root {
-    --size: 100px;
-  }
-
-.team {
-    height: var( --size);
-}
-
-#sandbox {
-    height: 100%;
-    width: 100%;
-}
-
-.sizecontrol{
-    position: fixed;
-    padding: 0px;
-    width: 40px;
-    height: 40px;
-    text-align: center;
-    border-radius: 50%;
-    right: 10px;
-    bottom: 10px;
-}
-#plus {
-    bottom: 60px;
-}
-
-.relative{
-    position: relative;
-}
+    #deleteConfig.actice{
+        display: block;
+    }
