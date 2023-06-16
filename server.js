@@ -37,17 +37,18 @@ app.get("/manage", function (req, res) {
 //-------------------------------------------
 // the endpoint for the frontend
 //-------------------------------------------
-app.post("/login", async function (req, res) {
-  console.log(req.body);
-  const result = await handle_login(req);
+app.post("/loginUser", async function (req, res) {
+  const result = await handle_login(req, "User");
+  res.send(result);
+});
+
+app.post("/loginAdmin", async function (req, res) {
+  const result = await handle_login(req, "Admin");
   res.send(result);
 });
 
 app.post("/logout", async function (req, res) {
-  console.log("%%%%%%%%%%%%");
-  console.log(req.body);
   let {key} = req.body;
-  console.log(key);
   const result = await db.logout(key);
   res.send("Success");
 });
@@ -56,21 +57,32 @@ app.post("/register_team", async function (req, res) {
   let result = await handle_register_team(req);
   if(result === "success"){
     await handle_register_teams_user(req);
-    result = await handle_login(req);
+    result = await handle_login(req, "Admin");
   }
   res.send(result);
 });
+
+app.post("/save_management", async function (req, res) {
+  let result = await handle_save_management(req);
+  res.send(result);
+});
+
+app.post("/getSandbox", async function (req, res) {
+  let result = await handle_getSandbox(req);
+  res.send(JSON.stringify(result));
+
+})
 
 //-------------------------------------------
 // the function to handle the endponts for the frontend
 //-------------------------------------------
 
-async function handle_login(request){
+async function handle_login(request, type){
   try {
     let { name, password, team } = request.body;
     // check if user is in database
-    if(db.checkLoginData(name, password, team) === true){
-      return await db.generate_key(name, team);
+    if(db.checkLoginData(name, password, team, type) === true){
+      return await db.generate_key(name, team, type);
     }
     else{
       return("Invalid wrong user or password or team");
@@ -85,9 +97,7 @@ async function handle_login(request){
 async function handle_register_team(request){
   try {
     let {team, name, password} = request.body;
-    console.log(name, password, team);
     // check if user is in database
-    console.log(db.team_exist(team));
     if(db.team_exist(team) === false){ 
       await db.create_team(team);
       return("success");
@@ -114,9 +124,168 @@ async function handle_register_teams_user(request){
   }
 }
 
+async function handle_save_management(request){
+  try {
+    let {key, PersonAndConfig, PerConConnection} = request.body;
+    if(!checkKey(key, "admin")) return("logout");
+    else{
+      updateKey(key); 
+      let team = db.getTeamfromKey(key)["id"];
+      PerConConnection = JSON.parse(PerConConnection);
+      PersonAndConfig = JSON.parse(PersonAndConfig);
+      if(!checkPerConData(PersonAndConfig, PerConConnection)) return("Ungültige Daten. Überprüfen sie die Verbindungen");
+      else{
+        safeManagement(PersonAndConfig, PerConConnection, team);
+        return("Erfolgreich gespeichert.");
+      }
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");
+  }  
+}
+
+async function handle_getSandbox(request) {
+  try{
+    let {key} = request.body;
+    if(!checkKey(key, "user")) return("logout");
+    else{
+      updateKey(key);
+      let team = db.getTeamfromKey(key)["id"];
+      return [db.getAllConnection(team), db.getAllPerConfig(team)]
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");
+  }  
+}
+
 //-------------------------------------------
 // generall functions
 //-------------------------------------------
 function infofromkey(key){
   return db.infofromkey(key);
+}
+
+function checkKey(key, type){
+  let keysfromDB = db.infofromkey(key, type);
+  return !(keysfromDB === "{}" || keysfromDB === undefined);
+}
+
+function updateKey(key){
+  db.updateKey(key);
+}
+
+function checkConfig(name, data, PerConConnection, PersonAndConfig){
+  let feedback = true;
+  PerConConnection.forEach( connection => {
+    if(connection === null) return;
+    if(connection[0] === name && PersonAndConfig[connection[2]]["type"] != "person"){ 
+      feedback = false; 
+    }
+  });
+  return feedback;
+}
+
+function checkValueofConfig() {
+  if(
+    config["type"] === "config" &&
+    typeof config["stunden"] === "number" &&
+    typeof config["ferien"] === "number"
+  ){return true}
+  else return false;  
+}
+
+function checkUser(name, data, PerConConnection, PersonAndConfig){
+  let feedback = false;
+  PerConConnection.forEach( connection => {
+    if(connection === null) return;
+    if(connection[0] === name && PersonAndConfig[connection[2]]["type"] === "config"){
+      feedback = true;
+    }
+
+    if(connection[0] === name && PersonAndConfig[connection[2]]["type"] === "person"){
+      feedback = false;
+      return feedback; 
+    }
+  });
+  return feedback;
+}
+
+function checkValueofConfig(config) {
+  if(
+    config["type"] === "config" &&
+    typeof config["stunden"] === "number" &&
+    typeof config["ferien"] === "number"
+  ){return true}
+  else return false;  
+}
+
+function checkValueofUser(config) {
+  if(
+    config["type"] === "person" &&
+    typeof config["Password"] === "string" &&
+    typeof config["x"] === "number" &&
+    typeof config["y"] === "number"
+  ){return true}
+  else return false;  
+}
+
+function checkPerConData(PersonAndConfig, PerConConnection){
+  let checksuccess = true;
+  for (const [key, value] of Object.entries(PersonAndConfig)) {
+    if(value["type"] === "config")
+    {
+      if(!checkValueofConfig(value) || !checkConfig(key, value, PerConConnection, PersonAndConfig)){
+        checksuccess = false;
+      }
+    } 
+    if(value["type"] === "person")
+    {
+      if(!checkValueofUser(value) || !checkUser(key, value, PerConConnection, PersonAndConfig)){
+        checksuccess = false;
+      }
+    }
+  }
+  return checksuccess;
+}
+
+function safeManagement( PersonAndConfig, PerConConnection, team){
+
+  db.deleteAllReference(team);
+  db.deleteAllField(team);
+  for (const [key, value] of Object.entries(PersonAndConfig)) {
+    if(value === null) continue;
+    db.insertField(key, value, team)
+  }
+
+  db.deleteAllConnection(team);
+  PerConConnection.forEach(
+    element => {
+      if(element != null){ db.insertConnection(element, team)}
+    }
+  );
+
+  db.deleteAllGroups(team);
+  for (const [key, value] of Object.entries(PersonAndConfig)) {
+    if(value["type"] === "config"){
+      db.insertGroup(key, value, team);
+    }
+  }
+
+  db.deleteAllPerson(team);
+  for (const [key, value] of Object.entries(PersonAndConfig)) {
+    if(value["type"] === "person"){
+    db.InsertPerson(key, value, team);
+    }
+  }
+
+  PerConConnection.forEach(
+    element => {
+      if(element != null) {db.InsertReference(element, PersonAndConfig, team)}}
+  );
+
+  
 }

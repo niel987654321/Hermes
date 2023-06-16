@@ -15,6 +15,9 @@
         <button id="newConfig">
             Neue Config
         </button>
+        <button id="safe">
+            Speichern
+        </button>
         <button id="logout" >Logout</button>
     </header>
     <div></div>
@@ -22,8 +25,6 @@
     <br>
     <br>
     <div id="sandbox">
-        <button id="plus" class="sizecontrol">+</button>
-        <button id="minus" class="sizecontrol">-</button>
     </div>
     <div id="configForm">
         <p>Name:</p>
@@ -31,10 +32,21 @@
         <p>Ferientage:</p>
         <input type="number" placeholder="Ferientage" id="configFerien">
         <p>Arbeitsstunden pro Woche:</p>
-        <input type="number" placeholder="Arbeitsstunden" id="configArbeit">        
+        <input type="number" placeholder="Arbeitsstunden" id="configArbeit">
+        <input id="defaultName" type="hidden">      
         <button id="safeConfig">Speichern</button>
         <button id="abbruchConfig">Abbruch</button>
-        <button id="deleteConfig"> Delete </button>
+        <button class="actice" id="deleteConfig"> Delete </button>
+    </div>
+    
+    <div id="UserForm">
+        <p>Name:</p>
+        <input placeholder="name" id="UserName">
+        <p>Passwort:</p>
+        <input placeholder="Password" id="UserPassword">        
+        <button id="safeUser">Speichern</button>
+        <button id="abbruchUser">Abbruch</button>
+        <button id="deleteUser"> Delete </button>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4"></script>
     <script src="https://unpkg.com/konva@9/konva.min.js"></script>

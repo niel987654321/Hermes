@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title>Hermes Login</title>
+</head>
+<body>
+    <header>
+        <a href="./">Erstellen sie ein Team</a>
+    </header>
+    <h1>Login von Hermes</h1>
+    <h3>Das bessere Zeus</h3>
+    <p>Geben sie ihre Anmeldedaten an und Melden sie sich dann als Admin oder User an</p>
+    <div class="register">
+        <form action="/register_team" method="post">
+        <input type="text" name="team" placeholder="team name" required="true"/>
+        <input type="text" name="name" placeholder="username" required="true"/>
+        <input type="password" name="password" placeholder="password" required="true"/>
+        <button id="user">login as user</button>
+        <br>
+        <button id="admin">login as admin</button>   
+        </form>
+        <p id="error"></p>
+    </div>
+    <img id="hermes" src="./img/hermes.jpg">
+    <script src="login.js"></script>
+</body>
+</html>

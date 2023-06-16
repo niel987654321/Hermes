@@ -1,111 +1,87 @@
-document.getElementById("logout").addEventListener("click", () => {
-        fetch('/logout', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `key=${localStorage.getItem("key")}`
-        })
-        .then(response => () => {
-            localStorage.removeItem('key')
-            location.href = "./login"
-            }
-        )
-    });
+document.getElementById("logout").addEventListener("click", () => { logout();});
 
-    function buildSandbox(data){
+function isEmpty(obj) {
+    for (const prop in obj) {
+      if (Object.hasOwn(obj, prop)) {
+        return false;
+      }
+    }
+  
+    return true;
+  }
 
+function logout() {
+    console.log("1");
+    fetch('/logout', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `key=${localStorage.getItem("key")}`
+    })
+    .then(response => {
+        localStorage.removeItem('key')
+        location.href = "./login"
+        }
+    )
+}
+
+    function createSandbox(){
+        layer.removeChildren();
+        layer.draw();
+        for (const [key, value] of Object.entries(persones_data)) {
+            createField(key, value.type, value.x, value.y);
+        };
+        updateConnections();
+    }
+
+    function formatData(data) {
+        if(data === 401){
+            logout();
+        }
+        
+        const dataArray = data;
+ 
+        if(isEmpty(persones_data)){
+            persones_data = dataArray[1];
+            connentions = dataArray[0];
+        }
+        console.log(persones_data);
+        createSandbox();
     }
 
     function loadSandbox() {
         if(localStorage.getItem("key") != undefined){
-            fetch('/getSandbox', {
-                method: 'POST',
-                headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: `key=${localStorage.getItem("key")}`
-            })
-            .then(response => buildSandbox(response)) 
+          fetch('/getSandbox', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `key=${localStorage.getItem("key")}`
+          })
+          .then(response => response.json())
+          .then(data => formatData(data))
         }
         else{
-            localStorage.removeItem('key')
-            location.href = "./login"
+          logout();
         }
     }
 
-
-    //document.addEventListener("load", loadSandbox()); 
-
-    let size = 100;
-    function changeSize(change) {
-        if(change + size > 50 && change + size < 150){
-            size = change + size;
-            var r = document.querySelector(':root');
-            r.style.setProperty('--size', size + "px");    
-        }
+    function safeSandbox() {
+        console.log(JSON.stringify(persones_data));
+        fetch('/save_management', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `key=${localStorage.getItem("key")}&PerConConnection=${JSON.stringify(connentions)}&PersonAndConfig=${JSON.stringify(persones_data)}`
+        })
+        .then(response => response.text())
+        .then(data => alert(data))
     }
 
-    document.getElementById("plus").addEventListener("click", () => {changeSize(10)})
 
-    document.getElementById("minus").addEventListener("click", () => {changeSize(-10)})
-
-    let selectedElement = null;
-    let x = 0;
-    let y = 0;
-    let draggable = false;
-
-    const draggableElements = document.querySelectorAll(".draggable");
-    draggableElements.forEach((element) => {addMoveListener(element)});
-
-    function addMoveListener(element) {
-        element.style.top = 100+"px";
-        element.style.left = 100+"px";
-        element.addEventListener("mousedown", (event) => {
-            selectedElement = event.target;
-            x = event.clientX;
-            y = event.clientY;
-        });
-    }
-
-    document.addEventListener("mousemove", (event) => {
-        dragging = true
-        if (selectedElement) {
-            selectedElement.style.left = `${selectedElement.offsetLeft + event.clientX - x}px`;
-            selectedElement.style.top = `${selectedElement.offsetTop + event.clientY - y}px`;
-            x = event.clientX;
-            y = event.clientY;
-            if(event.clientY < 60){ 
-                y = 60
-                selectedElement.style.top = `${y}px`;
-            }
-            // Check if the element has reached the right or bottom edge of the page
-            if (selectedElement.offsetLeft + selectedElement.offsetWidth + 500 >= document.documentElement.clientWidth) {
-                console.log("breit");
-                document.documentElement.style.width = `${document.documentElement.clientWidth + 200}px`;
-            }
-            if (selectedElement.offsetTop +100 >= document.documentElement.clientHeight) {
-                console.log("lang");
-                console.log(selectedElement.offsetTop , selectedElement.offsetHeight ,  document.documentElement.clientHeight, document.documentElement.style.height );
-
-                document.documentElement.style.height = `${selectedElement.offsetHeight + selectedElement.offsetTop}px`;
-                window.scrollTo( 0, document.documentElement.scrollHeight);
-                document.documentElement.style.height = `${selectedElement.offsetHeight * 2 + selectedElement.offsetTop}px`;
-                console.log(selectedElement.offsetTop , selectedElement.offsetHeight ,  document.documentElement.clientHeight, document.documentElement.style.height );
-    
-            }
-        }
-    });
-
-    function edit() {
-
-    }
-
-    document.addEventListener("mouseup", () => {
-    // if(dragging) selectedElement = null;
-        //else edit(selectedElement);
-        //dragging = false;
-    });
+    document.addEventListener("load", loadSandbox()); 
 
     makePasswort = () => {
         return [...Array(10)]
@@ -134,18 +110,50 @@ document.getElementById("logout").addEventListener("click", () => {
                 }
             }
         }
-        console.log("config");
         if(type === "config"){
             document.getElementById('configForm').classList.add('active');
+            document.getElementById('deleteConfig').style.display = "none";
         }
+    }
+    
+    function showConfigEdit(Config){
+        document.getElementById('configName').value = Config;
+        document.getElementById('configFerien').value = persones_data[Config]["ferien"];
+        document.getElementById('configArbeit').value = persones_data[Config]["stunden"];
+        document.getElementById("defaultName").value = Config;
+        document.getElementById('configForm').classList.add('active');
+        document.getElementById('deleteConfig').style.display = "inline-block";
+    }
+
+    function hideConfigEdit(Config){
+        document.getElementById('configForm').classList.remove('active');
+        document.getElementById('deleteConfig').style.display = "none";
     }
 
     document.getElementById("newPerson").addEventListener('click', () => create("person"));
     document.getElementById("newConfig").addEventListener('click', () => create("config"));
+    document.getElementById("safe").addEventListener('click', () => safeSandbox());
+
     document.getElementById("abbruchConfig").addEventListener('click', () => {
         document.getElementById('configForm').classList.remove('active');
     });
+    document.getElementById("abbruchUser").addEventListener('click', () => {
+        document.getElementById('UserForm').classList.remove('active');
+    });
+    
     document.getElementById("safeConfig").addEventListener('click', () => createConfigfromForm("config"));
+    document.getElementById("safeUser").addEventListener('click', () => createPersonFromForm());
+
+    document.getElementById("deleteConfig").addEventListener('click', () => {
+        deleteField(document.getElementById('configName').value);
+        hideConfigEdit();
+    });
+
+    document.getElementById("deleteUser").addEventListener('click', () => {
+        deleteField(document.getElementById('UserName').value);
+        document.getElementById('UserForm').classList.remove('active');
+    });
+
 
     var width = window.innerWidth;
     var height = window.innerHeight - 50;
@@ -159,12 +167,24 @@ document.getElementById("logout").addEventListener("click", () => {
     stage.add(layer);
     persones_data = {};
 
+    function createPersonFromForm() {
+        var name = document.getElementById('UserName').value;
+        var password = document.getElementById('UserPassword').value;
+        delete persones_data[document.getElementById("defaultName").value];
+        createPerson(name, password);
+        createSandbox();
+    }
+
     function createPerson(name, Password) {
         if(persones_data[name] != undefined) return;
-        persones_data[name] = {};
-        persones_data[name]["Password"] = Password;
-        persones_data[name]["type"] = "person";
-        createField(name, "person", 50, 80);
+        else{
+            persones_data[name] = {};
+            persones_data[name]["Password"] = Password;
+            persones_data[name]["type"] = "person";
+            persones_data[name].x = 50;
+            persones_data[name].y = 80;
+            createField(name, "person", 50, 80);
+        }
     }
 
     function createConfigfromForm() {
@@ -172,22 +192,36 @@ document.getElementById("logout").addEventListener("click", () => {
         const name = document.getElementById('configName').value;
         const ferien = document.getElementById('configFerien').value;
         const arbeit = document.getElementById('configArbeit').value;
+        delete persones_data[document.getElementById("defaultName").value];
         createConfig(name, arbeit, ferien);
     }
 
     function createConfig(name, stunden, ferien, ) {
         if(persones_data[name] != undefined) return;
-        persones_data[name] = {};
-        persones_data[name]["stunden"] = stunden;
-        persones_data[name]["ferien"] = ferien;
-        persones_data[name]["type"] = "config";
-        createField(name, "config", 50, 80);
+        else{
+            persones_data[name] = {};
+            persones_data[name]["stunden"] = parseInt(stunden);
+            persones_data[name]["ferien"] = parseInt(ferien);
+            persones_data[name]["type"] = "config";
+            persones_data[name].x = 50;
+            persones_data[name].y = 80;
+            createSandbox();
+        }
+    }
+
+    function deleteField(name){
+        delete persones_data[name];
+        connentions.forEach((connection, index) => {
+            if(connection.includes(name)){
+                connentions[index] = null;   
+            }
+        });
+        createSandbox();
     }
 
     var line;
     let lineBeginType
     let beginn;
-    let persones = {}
     let connentions = [];
     function createField(name, createType, defaultx, defaulty) {
         let color = "black"
@@ -232,7 +266,18 @@ document.getElementById("logout").addEventListener("click", () => {
         layer.add(topPoint);
         layer.add(bottomPoint);
 
-
+        textNode.on('click', (event) => {
+           if(createType === "config"){
+                showConfigEdit(name);
+           }
+           if(createType === "person"){
+            document.getElementById('UserForm').classList.add('active');
+            document.getElementById('UserPassword').value = persones_data[name].Password;
+            document.getElementById('UserName').value = name;
+            document.getElementById('defaultName').value = name;
+            
+           }
+        });
 
         // Update the position of the points when the text is dragged
         textNode.on('dragmove', () => {
@@ -299,22 +344,21 @@ document.getElementById("logout").addEventListener("click", () => {
     }
 
     stage.on('mouseup', () => {
-        console.log(beginn);
         let found = false;
         for (const [key, value] of Object.entries(persones_data)) {
             if (line) {
-                debugger;
+                
                 if(key === beginn) continue;
                 var points = line.points();
                 var x = points[2];
                 var y = points[3];
                 if (Math.sqrt((x - value.top.x) ** 2 + (y - value.top.y) ** 2) < 50 && lineBeginType === "bottom") {
-                    connentions.push([key, "top",beginn, "bottom"]);
+                    connentions.push([beginn, "bottom", key, "top"]);
                     found = true;
                     updateConnections()
                 }
                 if (Math.sqrt((x - value.bottom.x) ** 2 + (y - value.bottom.y) ** 2) < 50 && lineBeginType === "top") {
-                    connentions.push([key, "top",beginn, "bottom"]);
+                    connentions.push([key, "bottom",beginn, "top"]);
                     found = true;
                     updateConnections()
                 }
@@ -335,7 +379,6 @@ document.getElementById("logout").addEventListener("click", () => {
         })
         for (let i = 0; i < connentions.length; i++) {
             if(connentions[i] === null) continue;
-            console.log(persones_data,connentions );
             line = new Konva.Line({
                 points: [persones_data[connentions[i][0]][connentions[i][1]].x, persones_data[connentions[i][0]][connentions[i][1]].y, persones_data[connentions[i][2]][connentions[i][3]].x, persones_data[connentions[i][2]][connentions[i][3]].y],
                 stroke: 'black'
@@ -352,6 +395,12 @@ document.getElementById("logout").addEventListener("click", () => {
         line = null;
     }
 
-
-
-    
+    function replaceValue(arr, oldValue, newValue) {
+        for (let i = 0; i < arr.length; i++) {
+          if (Array.isArray(arr[i])) {
+            replaceValue(arr[i], oldValue, newValue);
+          } else if (arr[i] === oldValue) {
+            arr[i] = newValue;
+          }
+        }
+      }

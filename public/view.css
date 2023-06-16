@@ -1,0 +1,90 @@
+header {
+    height: 50px;
+    background-color: gold;
+    display: flex;
+    align-items: center;
+    position: fixed;
+    width: 100%;
+}
+
+body, html {
+    text-align: center;  
+    width: 100%;
+    height: 100%;
+}
+
+button, .dropdown {
+    height: 40px;
+    font-family: "Roboto", sans-serif;
+    text-transform: uppercase;
+    outline: 0;
+    background: gold;
+    border: 0;
+    padding: 5px;
+    color: #FFFFFF;
+    font-size: 14px;
+    -webkit-transition: all 0.3 ease;
+    transition: all 0.3 ease;
+    cursor: pointer;
+    width: 150px;
+}
+
+header #logout {
+    margin-left: auto;
+    margin-right: 5%;
+    color: black;
+    font-size: 100%;
+    width: 100px;
+    text-decoration: none;
+}
+
+body, html {
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
+
+#team {
+    margin-bottom: 10px;
+}
+
+button:hover {
+    background: goldenrod;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #e0dbdb;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(206, 136, 24, 0.2);
+    z-index: 1;
+}
+
+.dropdown-content button {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+
+.dropdown-content button:hover {background-color: #f8f32b }
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown:hover .dropbtn {
+  background-color: goldenrod;
+}
+
+#sandbox {
+    margin-top: 20%;
+}
+
+.fenster {
+    width: 100%;
+    height: 70%;
+    background-color: #e0dbdb;
+}
