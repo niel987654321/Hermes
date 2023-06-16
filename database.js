@@ -14,24 +14,27 @@ module.exports = function (file) {
     }
 
     this.checkLoginData = function (name, password, team, type) {
-      const table = type === 'User' ? 'Person' : 'User';
+      const table = type === 'User' ? 'User' : 'Person';
       const team_id = this.getTeamfromName(team)["id"];
+      console.log(table, name, password, team_id);
       const select = this.db.prepare(
         `SELECT * FROM ${table} WHERE name= @name AND Password = @password AND fk_team = @team_id`
       );
       const result = select.get({name, password, team_id});
+      console.log(result);
       return result !== undefined;
     }
 
     this.generate_key = function (name, team, type) {
-      const table = type === 'User' ? 'Person' : 'User';
-      const keytable = type === 'User' ? 'PersonKey' : 'Key';
+      console.log(name, team, type)
+      const table = type === 'User' ? 'User' : 'Person';
+      const keytable = type === 'User' ? 'Key' : 'PersonKey';
       const team_id = this.getTeamfromName(team)["id"];
       const select = this.db.prepare(
         `SELECT id FROM ${table} WHERE Name= @name AND fk_team = @team_id`
       );
       const result = select.get({name, team_id});
-    
+
       let keyquery;
       let key;
       do {
@@ -41,11 +44,12 @@ module.exports = function (file) {
         );
         keyquery = select_key.get({key});
       } while (keyquery != undefined);
-      this.insertKey(key, result["id"], keytable);
+      this.insertKey(key, result["ID"], keytable);
       return key;
     }
     
     this.insertKey = (key, fk_user, keytable) => {
+      console.log(key, keytable, fk_user);
       const validity = Math.floor(new Date().getTime() / 1000) + 1000;
       const insert = this.db.prepare(
         `INSERT INTO ${keytable} (key, fk_user, validity) VALUES (@key ,@fk_user, @validity);`
@@ -81,9 +85,10 @@ module.exports = function (file) {
     }
 
     this.infofromkey = (key, type) => {
-      const keytable = type === 'User' ? 'PersonKey' : 'Key';
+      const keytable = type === 'User' ? 'Key' : 'PersonKey';
+      const usertable = type === 'User' ? 'User' : 'Person';
       const select = this.db.prepare(
-        `SELECT * FROM ${keytable} as k LEFT JOIN User u ON k.fk_user = u.id WHERE k.key = @key`
+        `SELECT * FROM ${keytable} as k LEFT JOIN ${usertable} u ON k.fk_user = u.id WHERE k.key = @key`
       );
       return select.get({key});
     }
@@ -110,10 +115,11 @@ module.exports = function (file) {
       return("success");
     }
 
-    this.updateKey = (key) => {
+    this.updateKey = (key, type) => {
+      const keytable = type === 'User' ? 'Key' : 'PersonKey';
       const validity = Math.floor(new Date().getTime() / 1000) + 1000
       const updateKey = this.db.prepare(
-        "UPDATE Key SET validity = ? WHERE key = ?; "
+        `UPDATE ${keytable} SET validity = ? WHERE key = ?;`
       );
       updateKey.run(validity ,key);
     }
@@ -284,6 +290,17 @@ module.exports = function (file) {
         };
         return acc;
       }, {});
+    }
+
+    this.getAllEntries = (begin, end, name, team) => {
+      const fk_user = this.getIDfromNamePerson(name, team);
+      const getTeam = this.db.prepare(
+        "SELECT * FROM Bookings WHERE ( Start < ? OR End > ?) AND fk_user = ? AND Typ != 'automatic'"
+      );
+      console.log(end, begin, fk_user);
+      console.log(getTeam.all(end, begin, fk_user));
+      return getTeam.all(end, begin, fk_user);
+        
     }
   
     this.close = function () {

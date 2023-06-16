@@ -38,12 +38,12 @@ app.get("/manage", function (req, res) {
 // the endpoint for the frontend
 //-------------------------------------------
 app.post("/loginUser", async function (req, res) {
-  const result = await handle_login(req, "User");
+  const result = await handle_login(req, "Person");
   res.send(result);
 });
 
 app.post("/loginAdmin", async function (req, res) {
-  const result = await handle_login(req, "Admin");
+  const result = await handle_login(req, "User");
   res.send(result);
 });
 
@@ -71,6 +71,11 @@ app.post("/getSandbox", async function (req, res) {
   let result = await handle_getSandbox(req);
   res.send(JSON.stringify(result));
 
+})
+
+app.post("/getWeekData", async function (req, res) {
+  let result = await handle_getWeekData(req);
+  res.send(result);
 })
 
 //-------------------------------------------
@@ -129,7 +134,7 @@ async function handle_save_management(request){
     let {key, PersonAndConfig, PerConConnection} = request.body;
     if(!checkKey(key, "admin")) return("logout");
     else{
-      updateKey(key); 
+      updateKey(key, "User"); 
       let team = db.getTeamfromKey(key)["id"];
       PerConConnection = JSON.parse(PerConConnection);
       PersonAndConfig = JSON.parse(PersonAndConfig);
@@ -151,9 +156,27 @@ async function handle_getSandbox(request) {
     let {key} = request.body;
     if(!checkKey(key, "user")) return("logout");
     else{
-      updateKey(key);
+      updateKey(key, "User");
       let team = db.getTeamfromKey(key)["id"];
       return [db.getAllConnection(team), db.getAllPerConfig(team)]
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");
+  }  
+}
+
+async function handle_getWeekData(request){
+  try{
+    let {key, week, year} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      let unixTime = getSecondsSinceEpochForWeek(week, year);
+      const name = infofromkey(key, "person")["Name"]
+      const team = infofromkey(key, "person")["fk_team"]
+      return getAllEntries(unixTime, name, team);
     }
   }
   catch(error){
@@ -165,8 +188,8 @@ async function handle_getSandbox(request) {
 //-------------------------------------------
 // generall functions
 //-------------------------------------------
-function infofromkey(key){
-  return db.infofromkey(key);
+function infofromkey(key, type){
+  return db.infofromkey(key, type);
 }
 
 function checkKey(key, type){
@@ -174,8 +197,8 @@ function checkKey(key, type){
   return !(keysfromDB === "{}" || keysfromDB === undefined);
 }
 
-function updateKey(key){
-  db.updateKey(key);
+function updateKey(key, type){
+  db.updateKey(key, type);
 }
 
 function checkConfig(name, data, PerConConnection, PersonAndConfig){
@@ -286,6 +309,27 @@ function safeManagement( PersonAndConfig, PerConConnection, team){
     element => {
       if(element != null) {db.InsertReference(element, PersonAndConfig, team)}}
   );
+}
 
-  
+function getSecondsSinceEpochForWeek(week, year) {
+  // Set the date to the first day of the year
+  let date = new Date(year, 0, 1);
+  // Calculate the number of days to add to reach the desired week
+  let daysToAdd = (week - 1) * 7;
+  // Add the number of days to the date
+  console.log(week, year, date);
+  date.setDate(date.getDate() + daysToAdd);
+  // Set the date to Monday of that week
+    
+  while (date.getDay() !== 1) {
+
+    date.setDate(date.getDate() + 1);
+  }
+  // Return the number of seconds since January 1st, 1970
+  return Math.floor(date.getTime() / 1000);
+}
+
+function getAllEntries(unixTime, name, team){
+  const weekEnd = unixTime + 604800;
+  return db.getAllEntries(unixTime, weekEnd, name, team);
 }
