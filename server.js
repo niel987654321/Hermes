@@ -15,9 +15,9 @@ app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
 
-//-------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // sends html to the frontend
-//-------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 app.get("/", function (req, res) {
   res.sendFile(__dirname + "/public/index.html");
 });
@@ -34,9 +34,9 @@ app.get("/manage", function (req, res) {
   res.sendFile(__dirname + "/public/manage.html");
 });
 
-//-------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // the endpoint for the frontend
-//-------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 app.post("/loginUser", async function (req, res) {
   const result = await handle_login(req, "Person");
   res.send(result);
@@ -78,9 +78,29 @@ app.post("/getWeekData", async function (req, res) {
   res.send(result);
 })
 
-//-------------------------------------------
+app.post("/updateBooking", async function (req, res) {
+  let result = await handle_updateBooking(req);
+  res.send(result);
+})
+
+app.post("/createBooking", async function (req, res) {
+  let result = await handle_createBooking(req);
+  res.send(result);
+})
+
+app.post("/deleteBooking", async function (req, res) {
+  let result = await handle_deleteBooking(req);
+  res.send(result);
+})
+
+app.post("/getTimes", async function (req, res) {
+  let result = await handle_getTimes(req);
+  res.send(result);
+})
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // the function to handle the endponts for the frontend
-//-------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 async function handle_login(request, type){
   try {
@@ -185,9 +205,94 @@ async function handle_getWeekData(request){
   }  
 }
 
-//-------------------------------------------
+async function handle_updateBooking(request){
+  try{
+    
+    let {key, Typ, Start, End, ID} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      Start = parseInt(Start);
+      End = parseInt(End);
+      if(checkIfisononeDay(Start, End) && Typ != "automatic"){
+        let fk_user = infofromkey(key, "Person")["ID"];
+        db.updateBooking(ID, Start, End, Typ, fk_user);
+        db.updateCurrentStatus(fk_user);
+        return "success";
+      }
+      else{
+        return "Falsche Zeitangaben";
+      }
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");    
+  }
+}
+
+
+async function handle_createBooking(request){
+  try{
+    let {key, Typ, Start, End} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      Start = parseInt(Start);
+      End = parseInt(End);
+      if(checkIfisononeDay(Start, End) && Typ != "automatic"){
+        let fk_user = infofromkey(key, "Person")["ID"];
+        db.createBooking(Start, End, Typ, fk_user);
+        db.updateCurrentStatus(fk_user);
+        return "success";
+      }
+      else{
+        return "Falsche Zeitangaben";
+      }
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");    
+  }
+}
+
+async function handle_deleteBooking(request){
+  try{
+    let {ID, key} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      let fk_user = infofromkey(key, "Person")["ID"];
+      db.deleteBooking(ID, fk_user);
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");    
+  }
+}
+
+async function handle_getTimes(request){
+  try{
+    let {key} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      let fk_user = infofromkey(key, "Person")["ID"];
+      let answer = [db.getHoliday(fk_user), db.getTime(fk_user)];
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");    
+  }
+}
+
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // generall functions
-//-------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 function infofromkey(key, type){
   return db.infofromkey(key, type);
 }
@@ -275,6 +380,7 @@ function checkPerConData(PersonAndConfig, PerConConnection){
   return checksuccess;
 }
 
+
 function safeManagement( PersonAndConfig, PerConConnection, team){
 
   db.deleteAllReference(team);
@@ -291,12 +397,14 @@ function safeManagement( PersonAndConfig, PerConConnection, team){
     }
   );
 
+
   db.deleteAllGroups(team);
   for (const [key, value] of Object.entries(PersonAndConfig)) {
     if(value["type"] === "config"){
       db.insertGroup(key, value, team);
     }
   }
+
 
   db.deleteAllPerson(team);
   for (const [key, value] of Object.entries(PersonAndConfig)) {
@@ -333,3 +441,33 @@ function getAllEntries(unixTime, name, team){
   const weekEnd = unixTime + 604800;
   return db.getAllEntries(unixTime, weekEnd, name, team);
 }
+
+function checkIfisononeDay(start, end) {
+  if (typeof start !== 'number' || typeof end !== 'number') {
+    return false;
+  }
+
+  const startDate = new Date(start * 1000);
+  const endDate = new Date(end * 1000);
+
+  return startDate.getFullYear() === endDate.getFullYear() &&
+    startDate.getMonth() === endDate.getMonth() &&
+    startDate.getDate() === endDate.getDate() && start < end;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// the sql to create triggers in database
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+/*
+CREATE TRIGGER update_profit AFTER INSERT ON Bookings
+BEGIN
+  UPDATE Bookings SET profit = NEW.End - NEW.Start WHERE ID = NEW.ID;
+END;
+
+CREATE TRIGGER update_profit_onupdate AFTER UPDATE ON Bookings
+BEGIN
+  UPDATE Bookings SET profit = NEW.End - NEW.Start WHERE ID = NEW.ID;
+END;
+*/

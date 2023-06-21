@@ -297,12 +297,61 @@ module.exports = function (file) {
       const getTeam = this.db.prepare(
         "SELECT * FROM Bookings WHERE ( Start < ? OR End > ?) AND fk_user = ? AND Typ != 'automatic'"
       );
-      console.log(end, begin, fk_user);
-      console.log(getTeam.all(end, begin, fk_user));
-      return getTeam.all(end, begin, fk_user);
-        
+      return getTeam.all(end, begin, fk_user);   
     }
-  
+
+    this.updateBooking = (ID, Start, End, Typ, fk_user) => {
+      const updateBooking = this.db.prepare(
+        "UPDATE Bookings SET Start = ? , End = ? ,Typ = ? WHERE fk_user = ? AND ID = ?"
+      );
+      return updateBooking.run(Start, End, Typ ,fk_user, ID);
+      }
+    
+    this.createBooking = (Start, End, Typ, fk_user) => {
+      console.log(Start, End, Typ, fk_user);
+      const updateBooking = this.db.prepare(
+        "INSERT INTO Bookings (Start, End, Typ, fk_user) VALUES (?,?,?,?)"
+      );
+      return updateBooking.run(Start, End, Typ ,fk_user);
+    }
+
+    this.updateCurrentStatus = (fkUser) => {
+      // Hole alle Datensätze mit dem angegebenen fk_user-Wert
+      let bookings = this.db
+        .prepare('SELECT * FROM Bookings WHERE fk_user = ?')
+        .all(fkUser);
+    
+      // Sortiere die Datensätze nach Start-Wert
+      bookings.sort((a, b) => a.Start - b.Start);
+    
+      // Berechne den Current_status-Wert für jeden Datensatz
+      for (let i = 0; i < bookings.length; i++) {
+        let currentStatus = 0;
+        if (i > 0) {
+          currentStatus = bookings[i - 1].Current_status + bookings[i].profit;
+        }
+        else currentStatus = bookings[i].Current_status;
+        bookings[i].Current_status = currentStatus;
+      }
+    
+      // Aktualisiere die Datensätze in der Datenbank
+      const updateBooking = this.db.prepare(
+        'UPDATE Bookings SET Current_status = ? WHERE ID = ?'
+      );
+      for (let booking of bookings) {
+        updateBooking.run(booking.Current_status, booking.ID);
+      }
+    }
+
+    this.deleteBooking = (ID, fk_user) => {
+      const insert = this.db.prepare(
+        "DELETE FROM Bookings WHERE ID = ? AND fk_user = ? AND Typ != 'automatic'; "
+      );
+      console.log(ID, fk_user);
+      insert.run(ID, fk_user);
+      return("success");
+    }
+
     this.close = function () {
       this.db.close((error) => {
         if (error) {

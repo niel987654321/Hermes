@@ -135,3 +135,28 @@ button:hover {
    width:300px;text-align:right;padding-right:
    10px;font-weight:bold
 }
+
+.event {
+    position: absolute; width: 12%; height: 10px; background-color: rgba(255, 0, 0, 0.5);   
+}
+
+/* Zentriere das anzeige-Element */
+#anzeige {
+    display: none;
+    background-color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+}
+
+/* Stilisiere die input-Elemente */
+#anzeige input {
+    display: block;
+    margin: 10px auto;
+    padding: 10px;
+    font-size: 18px;
+}

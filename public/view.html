@@ -14,7 +14,7 @@
             <div class="dropdown-content">
                 <button>Kommen</button>
                 <button>Gehen</button>
-                <button>Fehlzeit</button>
+                <button id="Fehlzeit">Fehlzeit</button>
             </div>
         </div>
         <button id="anfragen">
@@ -22,13 +22,17 @@
         </button>
         <button id="logout" >Logout</button>
     </header>
-    <div id="element" style="height: 100px; width: 100px; border: 1px solid black; background: linear-gradient(to top, green 30%, white 30%);"></div>
-  
+   
     <div id="sandbox">
         <div class="days" id="days">
-          
         </div>
-    
+        <div id="anzeige">
+            <input id="Typ">
+            <input type="datetime-local" id="Start">
+            <input type="datetime-local" id="End">
+            <button id="delete">delete</button>
+            <button id="safe">Safe</button>
+        </div>
     </div>
     <script src="view.js"></script>
 </body>
