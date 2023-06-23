@@ -310,9 +310,13 @@ module.exports = function (file) {
     
     this.createBooking = (Start, End, Typ, fk_user) => {
       const updateBooking = this.db.prepare(
-        "INSERT INTO Bookings (Start, End, Typ, fk_user) VALUES (?,?,?,?)"
+        "INSERT INTO Bookings (Start, End, Typ, fk_user, genemigt) VALUES (?,?,?,?,?)"
       );
-      return updateBooking.run(Start, End, Typ ,fk_user);
+      let genemigt
+      if(Typ != "Arbeit" || Typ != "Arbeiten") genemigt = 0
+      else genemigt = 1 
+      console.log("Genemigung:", genemigt, Typ);
+      return updateBooking.run(Start, End, Typ ,fk_user, genemigt);
     }
 
     this.updateCurrentStatus = (fkUser) => {

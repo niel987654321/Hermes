@@ -32,14 +32,14 @@ table.appendChild(dateRow);
 
 // Add an empty cell at the beginning of the first row
 const emptyCell2 = document.createElement("td");
-dateRow.appendChild(emptyCell);
+dateRow.appendChild(emptyCell2);
 
 
 for (let i = 0; i < tage.length; i++) {
     const tagBeschriftung = document.createElement("td");
     tagBeschriftung.id = i;
     tagBeschriftung.classList.add("style3");
-    tagBeschriftung.innerHTML = "hello";
+    tagBeschriftung.innerHTML = "loading ...";
     dateRow.appendChild(tagBeschriftung);
 }
 
@@ -103,6 +103,7 @@ function getWeekData(week, year){
                 div.style.height = (26 *( (bookings["End"] - bookings["Start"]) / 3600)) + "px";
                 div.style.width = rect.width + "px";
                 div.innerText = bookings["Typ"]
+                 if(bookings["genemigt"] === 0) div.style.backgroundColor = "rgba(255, 0, 0, 0.5)";
                 div.addEventListener("click", () => {showDetail(bookings)})
             });
         }
