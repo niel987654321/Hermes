@@ -17,10 +17,12 @@ form.addEventListener('submit', event => {
   .then(response => response.text())
   .then(data => {
     localStorage.setItem("key", data);
-    if(endpoint === "/loginUser") location.href = "/view";
-    else location.href = "/manage"; 
-    console.log("move");
-    alert(data);
+    if(data === "Invalid wrong user or password or team") document.getElementById("fehlermeldung").innerText = data
+    else {
+      if(endpoint === "/loginUser") location.href = "/view";
+      else location.href = "/manage"; 
+      console.log("move");
+    }
     
   });
 });

@@ -10,20 +10,26 @@
 <body>
     <header>
         <div class="dropdown">
-            <button class="dropbtn">Optionen</button>
-            <div class="dropdown-content">
-                <button>Kommen</button>
-                <button>Gehen</button>
-                <button id="Fehlzeit">Fehlzeit</button>
-            </div>
+            <button id="Fehlzeit">Eintragen</button>
         </div>
         <button id="anfragen">
             Anfragen
         </button>
         <button id="logout" >Logout</button>
     </header>
-   
     <div id="sandbox">
+        <div class="info">
+            <div class="text">
+                <p id="CurrentTime">Aktuelles Guthaben:</p>
+                <p id="HolidayToday">Ferien verbraucht:</p>
+                <p id="HolidaySaldo">Ferien die noch Eingetragen werden können:</p>
+                <p id="week">Woche: 10 </p>
+            </div>
+        </div class="showData">
+        <div id="navigate">
+            <button id="minusWeek"><</button>
+            <button id="plusWeek">></button>
+        </div>
         <div class="days" id="days">
         </div>
         <div id="anzeige">

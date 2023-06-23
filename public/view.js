@@ -25,6 +25,24 @@ for (let i = 0; i < tage.length; i++) {
     tagBeschriftung.innerHTML = tage[i]
     day.appendChild(tagBeschriftung);
 }
+
+let dateRow = document.createElement("tr");
+dateRow.classList.add("tableRow");
+table.appendChild(dateRow);
+
+// Add an empty cell at the beginning of the first row
+const emptyCell2 = document.createElement("td");
+dateRow.appendChild(emptyCell);
+
+
+for (let i = 0; i < tage.length; i++) {
+    const tagBeschriftung = document.createElement("td");
+    tagBeschriftung.id = i;
+    tagBeschriftung.classList.add("style3");
+    tagBeschriftung.innerHTML = "hello";
+    dateRow.appendChild(tagBeschriftung);
+}
+
 for (let s = 0; s < 24; s++) {
     let day = document.createElement("tr");
     day.classList.add("tableRow");
@@ -63,6 +81,11 @@ function getWeekData(week, year){
             elements.forEach(element => {
                 element.parentNode.removeChild(element);
             });
+            for (let i = 0; i < 7; i++) {
+                const elementDate = document.getElementById(i);
+                elementDate.innerText = getDateFromWeek(weekNumber, year, i);
+                const hour = document.createElement("td");
+            }
             dataObject.forEach( bookings => {
                 let startDate = new Date(bookings["Start"] * 1000);
                 let day = startDate.getDay();
@@ -87,7 +110,15 @@ function getWeekData(week, year){
     });
 }
 
-getWeekData(24, 2023);
+currentDate = new Date();
+startDate = new Date(currentDate.getFullYear(), 0, 1);
+var da = Math.floor((currentDate - startDate) /
+    (24 * 60 * 60 * 1000));
+
+var weekNumber = Math.ceil(da / 7);
+let year = currentDate.getFullYear();
+getWeekData(weekNumber, year);
+document.getElementById("week").innerText = `Woche: ${ weekNumber}, Jahr: ${year}`;
 
 function formatDateTime(date) {
     const year = date.getFullYear();
@@ -114,10 +145,48 @@ function formatDateTime(date) {
     
     current_ID = data["ID"];
   }
+
+  function neueWoche(jahr, woche, wochenVerschiebung) {
+    let neueWoche = woche + wochenVerschiebung;
+    let neuesJahr = jahr;
   
+    if (neueWoche < 1) {
+      neuesJahr--;
+      neueWoche = 52 + neueWoche;
+    } else if (neueWoche > 52) {
+      neuesJahr++;
+      neueWoche = neueWoche - 52;
+    }
+  
+    return { neuesJahr, neueWoche };
+  }
+
+document.getElementById("logout").addEventListener("click", () => {logout()});
+document.getElementById("plusWeek").addEventListener("click", () => {changeWeek(1)});
+document.getElementById("minusWeek").addEventListener("click", () => {changeWeek(-1)});
 document.getElementById("Fehlzeit").addEventListener("click", show_fehlzeit);
 document.getElementById("safe").addEventListener("click", speicher);
 document.getElementById("delete").addEventListener("click", loschen);
+
+function getDateFromWeek(week, year, dayOfWeek) {
+    const firstDayOfYear = new Date(year, 0, 1);
+    const days = 2 + dayOfWeek + (week - 1) * 7 - firstDayOfYear.getDay();
+    const date = new Date(year, 0, days);
+    
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const formattedDate = `${day}.${month}.${year}`;
+    
+    return formattedDate;
+}
+
+function changeWeek(verschiebung) {
+    const newdate = neueWoche(year, weekNumber, verschiebung);
+    weekNumber = newdate.neueWoche
+    year = newdate.neuesJahr
+    getWeekData(weekNumber, year);
+    document.getElementById("week").innerText = `Woche: ${ weekNumber}, Jahr: ${year}`;
+}
 
 function show_fehlzeit() {
     anzeige.style.display = "block";
@@ -148,7 +217,8 @@ async function speicher(){
         },
         body: data
     });
-console.log(answer);
+    getWeekData(weekNumber, year);
+    loadTimes();
 }
 
 function loschen(){
@@ -168,6 +238,8 @@ function loschen(){
           body: data
         });
     }
+    getWeekData(weekNumber, year);
+    loadTimes();
 }
 
 function loadTimes(){
@@ -182,9 +254,34 @@ function loadTimes(){
       })
     .then(response => response.json())
     .then(data => {
-        data[0];
+        if(data != "error" && data != "logout"){
+            let minuten = Math.floor(data[2] / 60);
+            let stunden = Math.floor(minuten / 60);
+            minuten = minuten % 60;
+            data[2] = data[2] % 60;
+            document.getElementById("HolidayToday").innerText = "Ferien verfügbar: "+data[0] + " Tage";
+            document.getElementById("HolidaySaldo").innerText = "Ferien die noch Eingetragen werden können: "+data[1] + " Tage";
+            document.getElementById("CurrentTime").innerText = `Aktuelles Guthaben:  ${stunden} h ${minuten} Min`;
+        }
+        console.log(data);
     });
     
 }
 
 loadTimes();
+
+function logout() {
+    console.log("1");
+    fetch('/logout', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `key=${localStorage.getItem("key")}`
+    })
+    .then(response => {
+        localStorage.removeItem('key')
+        location.href = "./login"
+        }
+    )
+}

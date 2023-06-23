@@ -36,12 +36,11 @@ function logout() {
     }
 
     function formatData(data) {
-        if(data === 401){
+        if(data === 401 || data === "logout"){
             logout();
         }
-        
         const dataArray = data;
- 
+        console.log(dataArray);
         if(isEmpty(persones_data)){
             persones_data = dataArray[1];
             connentions = dataArray[0];

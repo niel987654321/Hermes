@@ -15,13 +15,13 @@ module.exports = function (file) {
 
     this.checkLoginData = function (name, password, team, type) {
       const table = type === 'User' ? 'User' : 'Person';
-      const team_id = this.getTeamfromName(team)["id"];
+      const team_id = this.getTeamfromName(team)["ID"];
       console.log(table, name, password, team_id);
       const select = this.db.prepare(
         `SELECT * FROM ${table} WHERE name= @name AND Password = @password AND fk_team = @team_id`
       );
       const result = select.get({name, password, team_id});
-      console.log(result);
+      console.log("login result:"+result, table, name, password, team_id);
       return result !== undefined;
     }
 
@@ -29,12 +29,11 @@ module.exports = function (file) {
       console.log(name, team, type)
       const table = type === 'User' ? 'User' : 'Person';
       const keytable = type === 'User' ? 'Key' : 'PersonKey';
-      const team_id = this.getTeamfromName(team)["id"];
+      const team_id = this.getTeamfromName(team)["ID"];
       const select = this.db.prepare(
-        `SELECT id FROM ${table} WHERE Name= @name AND fk_team = @team_id`
+        `SELECT ID FROM ${table} WHERE Name= @name AND fk_team = @team_id`
       );
       const result = select.get({name, team_id});
-
       let keyquery;
       let key;
       do {
@@ -54,6 +53,7 @@ module.exports = function (file) {
       const insert = this.db.prepare(
         `INSERT INTO ${keytable} (key, fk_user, validity) VALUES (@key ,@fk_user, @validity);`
       );
+      console.log("Insert Key",key, fk_user, validity,"Table:", keytable);
       insert.run({key, fk_user, validity});
     }
 
@@ -67,7 +67,7 @@ module.exports = function (file) {
 
     this.getTeamfromName = function (team) {
       const select = this.db.prepare(
-        "SELECT id FROM Team WHERE name = @team"
+        "SELECT ID FROM Team WHERE name = @team"
       );
       return result = select.get({ team });
     }
@@ -88,13 +88,14 @@ module.exports = function (file) {
       const keytable = type === 'User' ? 'Key' : 'PersonKey';
       const usertable = type === 'User' ? 'User' : 'Person';
       const select = this.db.prepare(
-        `SELECT * FROM ${keytable} as k LEFT JOIN ${usertable} u ON k.fk_user = u.id WHERE k.key = @key`
+        `SELECT * FROM ${keytable} as k LEFT JOIN ${usertable} u ON k.fk_user = u.ID WHERE k.key = @key`
       );
       return select.get({key});
     }
 
     this.create_user = (name, password, team_id) => {
       try{
+        console.log("create user", name, password, team_id);
         const insert = this.db.prepare(
           "INSERT INTO User (Name, password, fk_team, ferien, arbeitspensum, arbeitstage) VALUES (@name, @password, @team_id, 0,0,0);"
         );
@@ -126,10 +127,9 @@ module.exports = function (file) {
 
     this.getTeamfromKey = (key) => {
       const getTeam = this.db.prepare(
-        "SELECT t.id FROM Key LEFT JOIN User as u on Key.fk_user = u.id LEFT JOIN Team as t on u.fk_team = t.id WHERE Key.key = ?"
+        "SELECT t.ID FROM Key LEFT JOIN User as u on Key.fk_user = u.ID LEFT JOIN Team as t on u.fk_team = t.ID WHERE Key.key = ?"
       );
       return result = getTeam.get( key );  
-
     }
 
     this.deleteAllField = (team) => {
@@ -226,6 +226,7 @@ module.exports = function (file) {
     }
 
     this.getIDfromNamePerson = (name, team) => {
+      console.log( "getIDfromNamePerson:" ,name, team);
       const getTeam = this.db.prepare(
         "SELECT ID FROM Person where Name = ? AND fk_team = ?"
       );
@@ -295,7 +296,7 @@ module.exports = function (file) {
     this.getAllEntries = (begin, end, name, team) => {
       const fk_user = this.getIDfromNamePerson(name, team);
       const getTeam = this.db.prepare(
-        "SELECT * FROM Bookings WHERE ( Start < ? OR End > ?) AND fk_user = ? AND Typ != 'automatic'"
+        "SELECT * FROM Bookings WHERE ( Start < ? AND End > ?) AND fk_user = ? AND Typ != 'automatic'"
       );
       return getTeam.all(end, begin, fk_user);   
     }
@@ -308,7 +309,6 @@ module.exports = function (file) {
       }
     
     this.createBooking = (Start, End, Typ, fk_user) => {
-      console.log(Start, End, Typ, fk_user);
       const updateBooking = this.db.prepare(
         "INSERT INTO Bookings (Start, End, Typ, fk_user) VALUES (?,?,?,?)"
       );
@@ -320,17 +320,16 @@ module.exports = function (file) {
       let bookings = this.db
         .prepare('SELECT * FROM Bookings WHERE fk_user = ?')
         .all(fkUser);
-    
+      
       // Sortiere die Datensätze nach Start-Wert
       bookings.sort((a, b) => a.Start - b.Start);
-    
       // Berechne den Current_status-Wert für jeden Datensatz
       for (let i = 0; i < bookings.length; i++) {
         let currentStatus = 0;
         if (i > 0) {
           currentStatus = bookings[i - 1].Current_status + bookings[i].profit;
         }
-        else currentStatus = bookings[i].Current_status;
+        else{ currentStatus = bookings[i].profit;}
         bookings[i].Current_status = currentStatus;
       }
     
@@ -347,9 +346,94 @@ module.exports = function (file) {
       const insert = this.db.prepare(
         "DELETE FROM Bookings WHERE ID = ? AND fk_user = ? AND Typ != 'automatic'; "
       );
-      console.log(ID, fk_user);
       insert.run(ID, fk_user);
       return("success");
+    }
+
+    this.getHolidayfromUser = (user) => {
+      const select = this.db.prepare(
+        "SELECT Ferien from Person LEFT JOIN Person_Group ON Person.ID = Person_Group.fk_person LEFT JOIN `Group` ON Person_Group.fk_group = `Group`.ID WHERE Person.ID = ?"
+      )
+      return select.get(user)["Ferien"];
+    }
+
+    this.getWorkTimefromUser = (user) => {
+      const select = this.db.prepare(
+        "SELECT Stunden from Person LEFT JOIN Person_Group ON Person.ID = Person_Group.fk_person LEFT JOIN `Group` ON Person_Group.fk_group = `Group`.ID WHERE Person.ID = ?;"
+      )
+      console.log(user, select.get(user))
+      return select.get(user)["Stunden"];
+      }
+
+    this.getHolidayEntered = (user) => {
+      const ferien = this.getHolidayfromUser(user);
+      const select = this.db.prepare(
+        "SELECT COUNT(*) FROM Bookings WHERE fk_user = ? AND Start > ? AND End < ? AND Typ = 'Ferien';"
+      )
+
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+
+
+      const startOfYearTimestamp = Math.floor(startOfYear.getTime() / 1000);
+      const endOfYearTimestamp = Math.floor(endOfYear.getTime() / 1000);
+      const verbrauchteFerien = select.get(user, startOfYearTimestamp, endOfYearTimestamp)["COUNT(*)"];
+      console.log("Ferien: ",startOfYearTimestamp, verbrauchteFerien ,user, ferien);
+      return ferien-verbrauchteFerien;
+    }
+
+    this.getHolidayAvailable = (user) => {
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+      const ferien = this.getHolidayfromUser(user);
+      const startOfYearTimestamp = Math.floor(startOfYear.getTime() / 1000);
+      const nowTimestamp = Math.floor(now.getTime() / 1000);
+      const select = this.db.prepare(
+        "SELECT COUNT(*) FROM Bookings WHERE fk_user = ? AND Start > ? AND End < ? AND Typ = 'Ferien';"
+      )
+
+      const verbrauchteFerien = select.get(user, startOfYearTimestamp, nowTimestamp)["COUNT(*)"];
+      return ferien-verbrauchteFerien;
+    }
+    
+    this.getTime = (user) => {
+      this.updateCurrentStatus(user);
+      const now = new Date();
+      const nowTimestamp = Math.floor(now.getTime() / 1000);
+      const select = this.db.prepare(
+        "SELECT Current_status FROM Bookings WHERE End < ? AND Fk_user = ? ORDER BY End DESC LIMIT 1;"
+      )
+      let ergebnis = select.get(nowTimestamp, user)
+      if(ergebnis === undefined) ergebnis = 0;
+      else ergebnis = ergebnis["Current_status"]
+      return ergebnis
+    }
+
+    this.checkIfalreadyInsert = (timestamp) => {
+      const select = this.db.prepare(
+        "SELECT * FROM Bookings WHERE Start > ? AND Typ = 'automatic';"
+      )
+      let ergebnis = select.get(timestamp)
+      if(ergebnis === undefined) return false;
+      else return true
+    }
+
+    this.insertAllAutomaticWorkTime = (timestamp) => {
+      const select = this.db.prepare(
+        "SELECT ID FROM Person;"
+      )
+      let users = select.all();
+        for (let index = 0; index < users.length; index++) {
+          const workTime = parseInt(this.getWorkTimefromUser(users[index]["ID"]))/5;
+          const insert = this.db.prepare(
+            "INSERT INTO Bookings VALUES (NULL, 'automatic', ?, ?, NULL, NULL, ?);"
+          );
+          let entfernterTimestamp =  workTime * 60 * 60 + timestamp;
+          insert.run(entfernterTimestamp, timestamp , users[index].ID);
+          this.updateCurrentStatus(users[index]["ID"]);
+        }
     }
 
     this.close = function () {

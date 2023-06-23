@@ -1,4 +1,4 @@
-// all imports and requires
+             // all imports and requires
 const express = require("express");
 const cors = require('cors');
 const app = express();
@@ -105,6 +105,7 @@ app.post("/getTimes", async function (req, res) {
 async function handle_login(request, type){
   try {
     let { name, password, team } = request.body;
+
     // check if user is in database
     if(db.checkLoginData(name, password, team, type) === true){
       return await db.generate_key(name, team, type);
@@ -140,7 +141,7 @@ async function handle_register_team(request){
 async function handle_register_teams_user(request){
   try {
     let {team, name, password} = request.body;
-    const teamID = await db.getTeamfromName(team)["id"];
+    const teamID = await db.getTeamfromName(team)["ID"];
     await db.create_user(name, password, teamID);
   }
   catch(error){
@@ -152,10 +153,10 @@ async function handle_register_teams_user(request){
 async function handle_save_management(request){
   try {
     let {key, PersonAndConfig, PerConConnection} = request.body;
-    if(!checkKey(key, "admin")) return("logout");
+    if(!checkKey(key, "User")) return("logout");
     else{
       updateKey(key, "User"); 
-      let team = db.getTeamfromKey(key)["id"];
+      let team = db.getTeamfromKey(key)["ID"];
       PerConConnection = JSON.parse(PerConConnection);
       PersonAndConfig = JSON.parse(PersonAndConfig);
       if(!checkPerConData(PersonAndConfig, PerConConnection)) return("Ungültige Daten. Überprüfen sie die Verbindungen");
@@ -174,10 +175,10 @@ async function handle_save_management(request){
 async function handle_getSandbox(request) {
   try{
     let {key} = request.body;
-    if(!checkKey(key, "user")) return("logout");
+    if(!checkKey(key, "User")) return("logout");
     else{
       updateKey(key, "User");
-      let team = db.getTeamfromKey(key)["id"];
+      let team = db.getTeamfromKey(key)["ID"];
       return [db.getAllConnection(team), db.getAllPerConfig(team)]
     }
   }
@@ -216,6 +217,17 @@ async function handle_updateBooking(request){
       End = parseInt(End);
       if(checkIfisononeDay(Start, End) && Typ != "automatic"){
         let fk_user = infofromkey(key, "Person")["ID"];
+        if(Typ === "Ferien") {
+          if(db.getHolidayEntered(fk_user) < 1){
+            console.log("Ferien verfügbar: ",db.getHolidayEntered(fk_user));
+            return "Keine Ferien mehr";
+          }
+          else {
+            newTime = newHolidayTime(Start, fk_user);
+            Start = newTime.achtUhr;
+            End = newTime.entfernterTimestamp;
+          }
+        }
         db.updateBooking(ID, Start, End, Typ, fk_user);
         db.updateCurrentStatus(fk_user);
         return "success";
@@ -231,7 +243,6 @@ async function handle_updateBooking(request){
   }
 }
 
-
 async function handle_createBooking(request){
   try{
     let {key, Typ, Start, End} = request.body;
@@ -242,12 +253,21 @@ async function handle_createBooking(request){
       End = parseInt(End);
       if(checkIfisononeDay(Start, End) && Typ != "automatic"){
         let fk_user = infofromkey(key, "Person")["ID"];
+        if(Typ === "Ferien") {
+          if(db.getHolidayEntered(fk_user) < 1){
+            console.log("Ferien verfügbar: ",db.getHolidayEntered(fk_user));
+            return "Keine Ferien mehr";
+          }
+          newTime = newHolidayTime(Start, fk_user);
+          Start = newTime.achtUhr;
+          End = newTime.entfernterTimestamp;
+        }
         db.createBooking(Start, End, Typ, fk_user);
         db.updateCurrentStatus(fk_user);
         return "success";
       }
       else{
-        return "Falsche Zeitangaben";
+        return "Falsche Zeitangaben oder ungültiger Name";
       }
     }
   }
@@ -280,7 +300,8 @@ async function handle_getTimes(request){
     else{
       updateKey(key, "person");
       let fk_user = infofromkey(key, "Person")["ID"];
-      let answer = [db.getHoliday(fk_user), db.getTime(fk_user)];
+      let answer = [db.getHolidayAvailable(fk_user), db.getHolidayEntered(fk_user), db.getTime(fk_user)];
+      return answer;
     }
   }
   catch(error){
@@ -299,6 +320,7 @@ function infofromkey(key, type){
 
 function checkKey(key, type){
   let keysfromDB = db.infofromkey(key, type);
+  console.log("Key überprüft. Ergebnis: "+keysfromDB, key, type);
   return !(keysfromDB === "{}" || keysfromDB === undefined);
 }
 
@@ -454,6 +476,30 @@ function checkIfisononeDay(start, end) {
     startDate.getMonth() === endDate.getMonth() &&
     startDate.getDate() === endDate.getDate() && start < end;
 }
+
+function newHolidayTime(unixTimestamp, user) {
+  let stundenEntfernung =  parseInt(db.getWorkTimefromUser(user))/5;
+  let datum = new Date(unixTimestamp * 1000);
+  let achtUhr = new Date(datum.getFullYear(), datum.getMonth(), datum.getDate(), 8);
+  let entfernterTimestamp = new Date(achtUhr.getTime() + stundenEntfernung * 60 * 60 * 1000);
+  return {
+    achtUhr: Math.floor(achtUhr.getTime() / 1000),
+    entfernterTimestamp: Math.floor(entfernterTimestamp.getTime() / 1000)
+  };
+}
+
+function insertDailyWorkTime(){
+  console.log("check automaitc time")
+  const currentDate = new Date();
+  currentDate.setDate(currentDate.getDate() - 1);
+  currentDate.setHours(0, 0, 0, 0);
+  const timestamp = Math.floor(currentDate.getTime() / 1000);
+  if(!db.checkIfalreadyInsert(timestamp)){
+    db.insertAllAutomaticWorkTime(timestamp);
+  }
+}
+
+setInterval(insertDailyWorkTime, 700000);
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // the sql to create triggers in database

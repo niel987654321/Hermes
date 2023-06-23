@@ -90,8 +90,7 @@ button:hover {
 .days {
     padding: 10px;
     height: 80%;
-    padding-top: 10%;
- 
+   
 }
 
 #sandbox {
@@ -159,4 +158,13 @@ button:hover {
     margin: 10px auto;
     padding: 10px;
     font-size: 18px;
+}
+
+.info {
+    display: grid;
+}
+
+.text {
+    justify-content: left;
+    justify-self: center;
 }
