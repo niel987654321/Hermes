@@ -100,19 +100,34 @@ app.post("/getTimes", async function (req, res) {
 })
 
 app.post("/BookingRequest", async function (req, res) {
-  let result = await handle_BookingRequest(req);
+  let timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ error: "error" });
+    }, 5000); // 5 Sekunden Timeout
+  });
+  let result = await Promise.race([handle_BookingRequest(req), timeoutPromise]);
   res.send(result);
-})
+});
 
 app.post("/acceptRequest", async function (req, res) {
-  let result = await handle_acceptRequest(req);
+  let timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ error: "error" });
+    }, 5000); // 5 Sekunden Timeout
+  });
+  let result = await Promise.race([handle_acceptRequest(req), timeoutPromise]);
   res.send(result);
-})
+});
 
 app.post("/declineRequest", async function (req, res) {
-  let result = await handle_declineRequest(req);
+  let timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ error: "error" });
+    }, 5000); // 5 Sekunden Timeout
+  });
+  let result = await Promise.race([handle_declineRequest(req), timeoutPromise]);
   res.send(result);
-})
+});
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // the function to handle the endponts for the frontend
