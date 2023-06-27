@@ -98,6 +98,11 @@ app.post("/getTimes", async function (req, res) {
   res.send(result);
 })
 
+app.post("/BookingRequest", async function (req, res) {
+  let result = await handle_BookingRequest(req);
+  res.send(result);
+})
+
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // the function to handle the endponts for the frontend
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -301,6 +306,23 @@ async function handle_getTimes(request){
       updateKey(key, "person");
       let fk_user = infofromkey(key, "Person")["ID"];
       let answer = [db.getHolidayAvailable(fk_user), db.getHolidayEntered(fk_user), db.getTime(fk_user)];
+      return answer;
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");    
+  }
+}
+
+async function handle_BookingRequest(request) {
+  try{
+    let {key} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      let fk_user = infofromkey(key, "Person")["ID"];
+      const answer = db.getBookingRequest(fk_user);
       return answer;
     }
   }

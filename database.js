@@ -313,8 +313,8 @@ module.exports = function (file) {
         "INSERT INTO Bookings (Start, End, Typ, fk_user, genemigt) VALUES (?,?,?,?,?)"
       );
       let genemigt
-      if(Typ != "Arbeit" || Typ != "Arbeiten") genemigt = 0
-      else genemigt = 1 
+      if(Typ === "Arbeit" || Typ === "Arbeiten") genemigt = 1
+      else genemigt = 0 
       console.log("Genemigung:", genemigt, Typ);
       return updateBooking.run(Start, End, Typ ,fk_user, genemigt);
     }
@@ -322,7 +322,7 @@ module.exports = function (file) {
     this.updateCurrentStatus = (fkUser) => {
       // Hole alle Datensätze mit dem angegebenen fk_user-Wert
       let bookings = this.db
-        .prepare('SELECT * FROM Bookings WHERE fk_user = ?')
+        .prepare('SELECT * FROM Bookings WHERE fk_user = ? AND genemigt = 1')
         .all(fkUser);
       
       // Sortiere die Datensätze nach Start-Wert
@@ -407,7 +407,7 @@ module.exports = function (file) {
       const now = new Date();
       const nowTimestamp = Math.floor(now.getTime() / 1000);
       const select = this.db.prepare(
-        "SELECT Current_status FROM Bookings WHERE End < ? AND Fk_user = ? ORDER BY End DESC LIMIT 1;"
+        "SELECT Current_status FROM Bookings WHERE End < ? AND Fk_user = ? AND genemigt = 1 ORDER BY End DESC LIMIT 1;"
       )
       let ergebnis = select.get(nowTimestamp, user)
       if(ergebnis === undefined) ergebnis = 0;
@@ -432,12 +432,19 @@ module.exports = function (file) {
         for (let index = 0; index < users.length; index++) {
           const workTime = parseInt(this.getWorkTimefromUser(users[index]["ID"]))/5;
           const insert = this.db.prepare(
-            "INSERT INTO Bookings VALUES (NULL, 'automatic', ?, ?, NULL, NULL, ?);"
+            "INSERT INTO Bookings VALUES (NULL, 'automatic', ?, ?, NULL, NULL, ?, 1);"
           );
           let entfernterTimestamp =  workTime * 60 * 60 + timestamp;
           insert.run(entfernterTimestamp, timestamp , users[index].ID);
           this.updateCurrentStatus(users[index]["ID"]);
         }
+    }
+
+    this.getBookingRequest = (User) => {
+      const select = this.db.prepare(
+        "WITH RECURSIVE unterstellteMitarbeiter AS (  SELECT  Person.ID AS PerID  FROM Person_group  JOIN `Group` ON Person_group.fk_group = `Group`.ID  JOIN Person_group AS Per2 ON Per2.fk_group = `Group`.ID  JOIN Person ON Person.ID = Per2.fk_person  LEFT JOIN Bookings ON Person.ID = Bookings.fk_user  JOIN Person_group AS Per3 ON Per3.fk_person = Person.ID  WHERE Person_group.chef = 1 AND Per2.chef = 0 AND Person_Group.fk_person = ?   UNION ALL   SELECT  Person.ID AS PerID  FROM Person_group  JOIN unterstellteMitarbeiter ON Person_Group.fk_person = unterstellteMitarbeiter.PerID  JOIN `Group` ON Person_group.fk_group = `Group`.ID  JOIN Person_group AS Per2 ON Per2.fk_group = `Group`.ID  JOIN Person ON Person.ID = Per2.fk_person  LEFT JOIN Bookings ON Person.ID = Bookings.fk_user  JOIN Person_group AS Per3 ON Per3.fk_person = Person.ID  WHERE Person_group.chef = 1 AND Per2.chef = 0  )     SELECT * FROM unterstellteMitarbeiter LEFT JOIN Bookings ON Bookings.fk_user = PerID GROUP BY PerID HAVING Bookings.genemigt = 0;"
+      )
+      return select.all(User);
     }
 
     this.close = function () {

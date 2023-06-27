@@ -103,7 +103,11 @@ function getWeekData(week, year){
                 div.style.height = (26 *( (bookings["End"] - bookings["Start"]) / 3600)) + "px";
                 div.style.width = rect.width + "px";
                 div.innerText = bookings["Typ"]
-                 if(bookings["genemigt"] === 0) div.style.backgroundColor = "rgba(255, 0, 0, 0.5)";
+                if(bookings["Typ"] === "Ferien") div.classList.add("green");
+                else if(bookings["Typ"] === "Arbeit" || bookings["Typ"] === "Arbeiten") div.classList.add("red");
+                else div.classList.add("blue");
+                
+                 if(bookings["genemigt"] === 0) div.style.opacity = 0.5;
                 div.addEventListener("click", () => {showDetail(bookings)})
             });
         }
@@ -271,8 +275,47 @@ function loadTimes(){
 
 loadTimes();
 
+function loadAnfragen() {
+    console.log("*********")
+    fetch('/BookingRequest', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `key=${localStorage.getItem("key")}`
+    })
+    .then(response => response.text())
+    .then(data => {
+        if(data != "error" && data != "logout"){
+            let requests = JSON.parse(data);
+            document.getElementById("displayAnfragen").innerHTML = "";
+            alert(data);
+            requests.forEach((request) => {
+                const div = document.createElement("div")
+                const name = document.createElement("h3")
+                const typ = document.createElement("h1")
+                const timeStart = document.createElement("p");
+                const timeEnd = document.createElement("p");
+                name.innerText = request["Name"]
+                typ.innerText = request["Typ"]
+                timeStart.innerText = formatTime(request["Start"]);
+                timeEnd.innerText = formatTime(request["End"]);
+                document.getElementById("displayAnfragen").appendChild(div);
+                div.appendChild(name);
+                div.appendChild(typ);
+                div.appendChild(timeStart);
+                div.appendChild(timeEnd);
+            })
+        }
+        else{
+
+            //location.href = "/login";
+        }
+        console.log(data);
+    });
+}
+
 function logout() {
-    console.log("1");
     fetch('/logout', {
         method: 'POST',
         headers: {
@@ -285,4 +328,44 @@ function logout() {
         location.href = "./login"
         }
     )
+}
+
+const anfragen = document.querySelector('#divAnzeigen');
+const buttonElement = document.querySelector('#anfragen');
+
+document.addEventListener('click', (event) => {
+  if (!anfragen.contains(event.target)  && event.target !== buttonElement) {
+    anfragen.style.display = 'none';
+  }
+});
+
+buttonElement.addEventListener('click', () => {
+    anfragen.style.display = 'block';
+    loadAnfragen();
+  });
+
+const divEintrag = document.querySelector('#anzeige');
+const buttonElement2 = document.querySelector('#Fehlzeit');
+
+document.addEventListener('click', (event) => {
+  if (!divEintrag.contains(event.target)  && event.target !== buttonElement2) {
+    divEintrag.style.display = 'none';
+  }
+});
+
+buttonElement2.addEventListener('click', () => {
+    divEintrag.style.display = 'block';
+  });
+
+function formatTime(timestamp) {
+const date = new Date(timestamp * 1000);
+
+const hours = date.getHours().toString().padStart(2, '0');
+const minutes = date.getMinutes().toString().padStart(2, '0');
+const day = date.getDate().toString().padStart(2, '0');
+const month = (date.getMonth() + 1).toString().padStart(2, '0');
+const year = date.getFullYear();
+
+const formattedDate = `${hours}:${minutes} ${day}-${month}-${year}`;
+return formattedDate
 }
