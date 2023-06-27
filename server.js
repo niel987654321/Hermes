@@ -6,6 +6,7 @@ const port = 3000; // App running on Port 3004
 const database = require("./database.js");
 const db = new database("./db.db");
 var bodyParser = require("body-parser");
+const e = require("express");
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -100,6 +101,16 @@ app.post("/getTimes", async function (req, res) {
 
 app.post("/BookingRequest", async function (req, res) {
   let result = await handle_BookingRequest(req);
+  res.send(result);
+})
+
+app.post("/acceptRequest", async function (req, res) {
+  let result = await handle_acceptRequest(req);
+  res.send(result);
+})
+
+app.post("/declineRequest", async function (req, res) {
+  let result = await handle_declineRequest(req);
   res.send(result);
 })
 
@@ -332,6 +343,43 @@ async function handle_BookingRequest(request) {
   }
 }
 
+async function handle_acceptRequest(request) {
+  try{
+    let {key, ID} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      if(checkIfRequestcanEdit(key, ID)){
+        updateRequest(ID, true);
+      }    
+      db.updateCurrentStatus( infofromkey(key, "Person")["ID"])
+      return "";
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");    
+  }
+}
+
+async function handle_declineRequest(request) {
+  try{
+    let {key, ID} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      if(checkIfRequestcanEdit(key, ID)){
+        updateRequest(ID, false);
+      }
+      db.updateCurrentStatus( infofromkey(key, "Person")["ID"])
+      return "";
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");    
+  }
+}
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // generall functions
@@ -522,6 +570,17 @@ function insertDailyWorkTime(){
 }
 
 setInterval(insertDailyWorkTime, 700000);
+
+function checkIfRequestcanEdit(key, id) {
+idUser = infofromkey(key, "Person")["ID"]
+if(db.checkRequestcanEdit(idUser, id) != "[]" && db.checkRequestcanEdit(idUser, id) != undefined && db.checkRequestcanEdit(idUser, id)) return true;
+else return false;
+}
+
+function updateRequest(ID, updateValue) {
+  if(updateValue) db.acceptRequest(ID)
+  else db.deleteRequest(ID);
+}
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // the sql to create triggers in database
