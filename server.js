@@ -6,7 +6,6 @@ const port = 3000; // App running on Port 3004
 const database = require("./database.js");
 const db = new database("./db.db");
 var bodyParser = require("body-parser");
-const e = require("express");
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -153,7 +152,7 @@ async function handle_login(request, type){
 
 async function handle_register_team(request){
   try {
-    let {team, name, password} = request.body;
+    let {team} = request.body;
     // check if user is in database
     if(db.team_exist(team) === false){ 
       await db.create_team(team);

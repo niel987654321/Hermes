@@ -1,4 +1,4 @@
-//if(localStorage.getItem("key") === undefined) location.href = "/login";
+if(localStorage.getItem("key") === undefined) location.href = "/login";
 let current_ID;
 let differentcolors = 1;
 const days = document.getElementById("days");
@@ -11,11 +11,13 @@ else{
     tage = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 }
 let day = document.createElement("tr");
+let head = document.createElement("thead");
 day.classList.add("tableRow");
 table.appendChild(day);
 
 // Add an empty cell at the beginning of the first row
 const emptyCell = document.createElement("td");
+emptyCell.innerHTML = "<br>"
 day.appendChild(emptyCell);
 
 for (let i = 0; i < tage.length; i++) {
@@ -32,6 +34,7 @@ table.appendChild(dateRow);
 
 // Add an empty cell at the beginning of the first row
 const emptyCell2 = document.createElement("td");
+emptyCell2.innerHTML = "<br>"
 dateRow.appendChild(emptyCell2);
 
 
@@ -51,6 +54,7 @@ for (let s = 0; s < 24; s++) {
     // Add the hour at the beginning of each row
     const hourCell = document.createElement("td");
     hourCell.innerHTML = s + "h";
+    hourCell.classList.add("hours");
     day.appendChild(hourCell);
 
     for (let i = 0; i < 7; i++) {
@@ -98,7 +102,7 @@ function getWeekData(week, year){
                 let cell = document.getElementById((startDate.getHours())+"&"+day);
                 let rect = cell.getBoundingClientRect();
                 div.style.left = rect.left + "px";
-                div.style.top = rect.top + (26 * startDate.getMinutes()/ 60)  + "px";
+                div.style.top = rect.top + (26 * startDate.getMinutes()/ 60) + window.scrollY  + "px";
                 div.style.height = (26 *( (bookings["End"] - bookings["Start"]) / 3600)) + "px";
                 div.style.width = rect.width + "px";
                 div.innerText = bookings["Typ"]
@@ -375,7 +379,7 @@ function logout() {
 
 const anfragen = document.querySelector('#divAnzeigen');
 const buttonElement = document.querySelector('#anfragen');
-
+anfragen.style.display = 'none';
 document.addEventListener('click', (event) => {
   if (!anfragen.contains(event.target)  && event.target !== buttonElement) {
     anfragen.style.display = 'none';
@@ -389,7 +393,7 @@ buttonElement.addEventListener('click', () => {
 
 const divEintrag = document.querySelector('#anzeige');
 const buttonElement2 = document.querySelector('#Fehlzeit');
-
+divEintrag.style.display = 'none';
 document.addEventListener('click', (event) => {
   if (!divEintrag.contains(event.target) && event.target !== buttonElement2 && !event.target.classList.contains('event')) {
     divEintrag.style.display = 'none';
