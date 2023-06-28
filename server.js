@@ -2,7 +2,7 @@
 const express = require("express");
 const cors = require('cors');
 const app = express();
-const port = 3000; // App running on Port 3004
+const port = 3000; // App running on Port 3000
 const database = require("./database.js");
 const db = new database("./db.db");
 var bodyParser = require("body-parser");
@@ -57,7 +57,7 @@ app.post("/register_team", async function (req, res) {
   let result = await handle_register_team(req);
   if(result === "success"){
     await handle_register_teams_user(req);
-    result = await handle_login(req, "Admin");
+    result = await handle_login(req, "User");
   }
   res.send(result);
 });
