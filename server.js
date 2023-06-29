@@ -2,7 +2,7 @@
 const express = require("express");
 const cors = require('cors');
 const app = express();
-const port = 3000; // App running on Port 3004
+const port = 3000; // App running on Port 3000
 const database = require("./database.js");
 const db = new database("./db.db");
 var bodyParser = require("body-parser");
@@ -57,7 +57,7 @@ app.post("/register_team", async function (req, res) {
   let result = await handle_register_team(req);
   if(result === "success"){
     await handle_register_teams_user(req);
-    result = await handle_login(req, "Admin");
+    result = await handle_login(req, "User");
   }
   res.send(result);
 });
@@ -99,9 +99,34 @@ app.post("/getTimes", async function (req, res) {
 })
 
 app.post("/BookingRequest", async function (req, res) {
-  let result = await handle_BookingRequest(req);
+  let timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ error: "error" });
+    }, 5000); // 5 Sekunden Timeout
+  });
+  let result = await Promise.race([handle_BookingRequest(req), timeoutPromise]);
   res.send(result);
-})
+});
+
+app.post("/acceptRequest", async function (req, res) {
+  let timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ error: "error" });
+    }, 5000); // 5 Sekunden Timeout
+  });
+  let result = await Promise.race([handle_acceptRequest(req), timeoutPromise]);
+  res.send(result);
+});
+
+app.post("/declineRequest", async function (req, res) {
+  let timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ error: "error" });
+    }, 5000); // 5 Sekunden Timeout
+  });
+  let result = await Promise.race([handle_declineRequest(req), timeoutPromise]);
+  res.send(result);
+});
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // the function to handle the endponts for the frontend
@@ -127,7 +152,7 @@ async function handle_login(request, type){
 
 async function handle_register_team(request){
   try {
-    let {team, name, password} = request.body;
+    let {team} = request.body;
     // check if user is in database
     if(db.team_exist(team) === false){ 
       await db.create_team(team);
@@ -333,6 +358,43 @@ async function handle_BookingRequest(request) {
   }
 }
 
+async function handle_acceptRequest(request) {
+  try{
+    let {key, ID} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      if(checkIfRequestcanEdit(key, ID)){
+        updateRequest(ID, true);
+      }    
+      db.updateCurrentStatus( infofromkey(key, "Person")["ID"])
+      return "";
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");    
+  }
+}
+
+async function handle_declineRequest(request) {
+  try{
+    let {key, ID} = request.body;
+    if(!checkKey(key, "person")) return("logout");
+    else{
+      updateKey(key, "person");
+      if(checkIfRequestcanEdit(key, ID)){
+        updateRequest(ID, false);
+      }
+      db.updateCurrentStatus( infofromkey(key, "Person")["ID"])
+      return "";
+    }
+  }
+  catch(error){
+    console.log(error);
+    return("error");    
+  }
+}
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // generall functions
@@ -523,6 +585,17 @@ function insertDailyWorkTime(){
 }
 
 setInterval(insertDailyWorkTime, 700000);
+
+function checkIfRequestcanEdit(key, id) {
+idUser = infofromkey(key, "Person")["ID"]
+if(db.checkRequestcanEdit(idUser, id) != "[]" && db.checkRequestcanEdit(idUser, id) != undefined && db.checkRequestcanEdit(idUser, id)) return true;
+else return false;
+}
+
+function updateRequest(ID, updateValue) {
+  if(updateValue) db.acceptRequest(ID)
+  else db.deleteRequest(ID);
+}
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // the sql to create triggers in database

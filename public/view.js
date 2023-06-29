@@ -1,4 +1,4 @@
-//if(localStorage.getItem("key") === undefined) location.href = "/login";
+if(localStorage.getItem("key") === undefined) location.href = "/login";
 let current_ID;
 let differentcolors = 1;
 const days = document.getElementById("days");
@@ -11,11 +11,13 @@ else{
     tage = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 }
 let day = document.createElement("tr");
+let head = document.createElement("thead");
 day.classList.add("tableRow");
 table.appendChild(day);
 
 // Add an empty cell at the beginning of the first row
 const emptyCell = document.createElement("td");
+emptyCell.innerHTML = "<br>"
 day.appendChild(emptyCell);
 
 for (let i = 0; i < tage.length; i++) {
@@ -32,6 +34,7 @@ table.appendChild(dateRow);
 
 // Add an empty cell at the beginning of the first row
 const emptyCell2 = document.createElement("td");
+emptyCell2.innerHTML = "<br>"
 dateRow.appendChild(emptyCell2);
 
 
@@ -51,6 +54,7 @@ for (let s = 0; s < 24; s++) {
     // Add the hour at the beginning of each row
     const hourCell = document.createElement("td");
     hourCell.innerHTML = s + "h";
+    hourCell.classList.add("hours");
     day.appendChild(hourCell);
 
     for (let i = 0; i < 7; i++) {
@@ -98,17 +102,15 @@ function getWeekData(week, year){
                 let cell = document.getElementById((startDate.getHours())+"&"+day);
                 let rect = cell.getBoundingClientRect();
                 div.style.left = rect.left + "px";
-                div.style.top = rect.top + (26 * startDate.getMinutes()/ 60)  + "px";
-                console.log( (bookings["End"] - bookings["Start"]) / 3600);
+                div.style.top = rect.top + (26 * startDate.getMinutes()/ 60) + window.scrollY  + "px";
                 div.style.height = (26 *( (bookings["End"] - bookings["Start"]) / 3600)) + "px";
                 div.style.width = rect.width + "px";
                 div.innerText = bookings["Typ"]
+                div.addEventListener("click", () => {showDetail(bookings)})
                 if(bookings["Typ"] === "Ferien") div.classList.add("green");
                 else if(bookings["Typ"] === "Arbeit" || bookings["Typ"] === "Arbeiten") div.classList.add("red");
                 else div.classList.add("blue");
-                
-                 if(bookings["genemigt"] === 0) div.style.opacity = 0.5;
-                div.addEventListener("click", () => {showDetail(bookings)})
+                if(bookings["genemigt"] === 0) div.style.opacity = 0.5;
             });
         }
         
@@ -136,6 +138,7 @@ function formatDateTime(date) {
   }
   
   function showDetail(data) {
+   
     anzeige.style.display = "block";
     document.getElementById("Typ").value = data["Typ"];
     
@@ -275,8 +278,41 @@ function loadTimes(){
 
 loadTimes();
 
+function acceptAnfrage(id) {
+  const data = new URLSearchParams();
+  data.append('ID', id);
+  data.append('key', localStorage.getItem("key"));
+  fetch('/acceptRequest', {
+    method: 'POST',
+    headers: {
+    'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: data
+})
+.then(response => response.text())
+.then(data => {
+  loadAnfragen();
+})
+}
+
+function declineAnfrage(id) {
+  const data = new URLSearchParams();
+  data.append('ID', id);
+  data.append('key', localStorage.getItem("key"));
+  fetch('/declineRequest', {
+    method: 'POST',
+    headers: {
+    'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: data
+})
+.then(response => response.text())
+.then(data => {
+  loadAnfragen();
+})
+}
+
 function loadAnfragen() {
-    console.log("*********")
     fetch('/BookingRequest', {
         method: 'POST',
         headers: {
@@ -289,23 +325,34 @@ function loadAnfragen() {
         if(data != "error" && data != "logout"){
             let requests = JSON.parse(data);
             document.getElementById("displayAnfragen").innerHTML = "";
-            alert(data);
             requests.forEach((request) => {
                 const div = document.createElement("div")
-                const name = document.createElement("h3")
-                const typ = document.createElement("h1")
+                const name = document.createElement("h4")
+                const typ = document.createElement("h2")
                 const timeStart = document.createElement("p");
                 const timeEnd = document.createElement("p");
+                const accept = document.createElement("button");
+                const decline = document.createElement("button");
                 name.innerText = request["Name"]
                 typ.innerText = request["Typ"]
                 timeStart.innerText = formatTime(request["Start"]);
                 timeEnd.innerText = formatTime(request["End"]);
+                accept.onclick = () => acceptAnfrage(request["ID"]);
+                decline.onclick = () => declineAnfrage(request["ID"]);
+                accept.innerText = "Annehmen";
+                decline.innerText = "Ablehnen";
                 document.getElementById("displayAnfragen").appendChild(div);
                 div.appendChild(name);
                 div.appendChild(typ);
                 div.appendChild(timeStart);
                 div.appendChild(timeEnd);
-            })
+                div.appendChild(accept);
+                div.appendChild(decline);
+
+              })
+            if(document.getElementById("displayAnfragen").innerHTML === ""){
+              document.getElementById("displayAnfragen").innerHTML = "Keine Anfragen";
+            }
         }
         else{
 
@@ -332,7 +379,7 @@ function logout() {
 
 const anfragen = document.querySelector('#divAnzeigen');
 const buttonElement = document.querySelector('#anfragen');
-
+anfragen.style.display = 'none';
 document.addEventListener('click', (event) => {
   if (!anfragen.contains(event.target)  && event.target !== buttonElement) {
     anfragen.style.display = 'none';
@@ -346,9 +393,9 @@ buttonElement.addEventListener('click', () => {
 
 const divEintrag = document.querySelector('#anzeige');
 const buttonElement2 = document.querySelector('#Fehlzeit');
-
+divEintrag.style.display = 'none';
 document.addEventListener('click', (event) => {
-  if (!divEintrag.contains(event.target)  && event.target !== buttonElement2) {
+  if (!divEintrag.contains(event.target) && event.target !== buttonElement2 && !event.target.classList.contains('event')) {
     divEintrag.style.display = 'none';
   }
 });
