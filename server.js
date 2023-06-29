@@ -290,6 +290,7 @@ async function handle_deleteBooking(request){
       updateKey(key, "person");
       let fk_user = infofromkey(key, "Person")["ID"];
       db.deleteBooking(ID, fk_user);
+      return("success")
     }
   }
   catch(error){

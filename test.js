@@ -22,3 +22,22 @@ function sendRequest() {
 }
 // Rufe sendRequest alle 5 Sekunden auf
 setInterval(sendRequest, 22000);
+
+// überprüft die automaitsche minuszeit und fügt sie ein falls nötig
+function insertDailyWorkTime(){
+  console.log("check automaitc time")
+  // aktuelle Datum wird erstellt
+  const currentDate = new Date();
+  // das datum von gestern
+  currentDate.setDate(currentDate.getDate() - 1);
+  currentDate.setHours(0, 0, 0, 0);
+  // in unix timestamp umgewandelt
+  const timestamp = Math.floor(currentDate.getTime() / 1000);
+  // überprüft ob heute schon automatische Werte eingefügt wurden
+  if(!db.checkIfalreadyInsert(timestamp)){
+    // fügt die automatischen Werte ein
+    db.insertAllAutomaticWorkTime(timestamp);
+  }
+}
+// setzt ein Interval um die automaische Minuszeit zu überprüfen
+setInterval(insertDailyWorkTime, 700000);
