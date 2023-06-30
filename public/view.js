@@ -61,6 +61,16 @@ for (let s = 0; s < 24; s++) {
         const hour = document.createElement("td");
         hour.id = s+"&"+i;
         hour.classList.add("style"+differentcolors);
+        hour.addEventListener("click", () => {
+          let day = document.getElementById(i).innerText;
+          timestamp = getUnixTimestamp(day, s);
+          data = {};
+          data.Typ = "";
+          data.Start = timestamp
+          data.End = timestamp + 3600;
+          data.ID = -10;
+          showDetail(data);
+        })
         day.appendChild(hour);
         differentcolors = differentcolors === 1 ? 0 : 1
     }
@@ -136,10 +146,11 @@ function formatDateTime(date) {
   
     return `${year}-${month}-${day}T${hour}:${minute}`;
   }
-  
+  let showDetailSecure = false
   function showDetail(data) {
-   
-    anzeige.style.display = "block";
+   console.log(data)
+    showDetailSecure = true;
+   anzeige.style.display = "block";
     document.getElementById("Typ").value = data["Typ"];
     
     let startDate = new Date(data["Start"] * 1000);
@@ -150,8 +161,7 @@ function formatDateTime(date) {
   
     document.getElementById("Start").value = startDateTimeString;
     document.getElementById("End").value = endDateTimeString;
-    
-    current_ID = data["ID"];
+    if(data["ID"] > 0)     current_ID = data["ID"];
   }
 
   function neueWoche(jahr, woche, wochenVerschiebung) {
@@ -395,9 +405,15 @@ const divEintrag = document.querySelector('#anzeige');
 const buttonElement2 = document.querySelector('#Fehlzeit');
 divEintrag.style.display = 'none';
 document.addEventListener('click', (event) => {
-  if (!divEintrag.contains(event.target) && event.target !== buttonElement2 && !event.target.classList.contains('event')) {
-    divEintrag.style.display = 'none';
+  if(!showDetailSecure){
+    if (!divEintrag.contains(event.target) && event.target !== buttonElement2 && !event.target.classList.contains('event')) {
+      divEintrag.style.display = 'none';
+    }
   }
+  else{
+    showDetailSecure = false;
+  }
+  
 });
 
 buttonElement2.addEventListener('click', () => {
@@ -415,4 +431,11 @@ const year = date.getFullYear();
 
 const formattedDate = `${hours}:${minutes} ${day}-${month}-${year}`;
 return formattedDate
+}
+
+function getUnixTimestamp(dateString, hours) {
+  if(hours.toString().length < 2) hours = "0"+hours;
+  const [day, month, year] = dateString.split('.');
+  const date = new Date(`${year}-${month}-${day}T${hours}:00:00`);
+  return Math.floor(date.getTime() / 1000);
 }

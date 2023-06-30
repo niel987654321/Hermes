@@ -580,11 +580,12 @@ function insertDailyWorkTime(){
   currentDate.setHours(0, 0, 0, 0);
   const timestamp = Math.floor(currentDate.getTime() / 1000);
   if(!db.checkIfalreadyInsert(timestamp)){
+    console.log("Jey");
     db.insertAllAutomaticWorkTime(timestamp);
   }
 }
 
-setInterval(insertDailyWorkTime, 700000);
+setInterval(insertDailyWorkTime, 7000);
 
 function checkIfRequestcanEdit(key, id) {
 idUser = infofromkey(key, "Person")["ID"]

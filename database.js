@@ -97,7 +97,7 @@ module.exports = function (file) {
       try{
         console.log("create user", name, password, team_id);
         const insert = this.db.prepare(
-          "INSERT INTO User (Name, password, fk_team, ferien, arbeitspensum, arbeitstage) VALUES (@name, @password, @team_id, 0,0,0);"
+          "INSERT INTO User (Name, password, fk_team) VALUES (@name, @password, @team_id);"
         );
         insert.run({ name, password, team_id });
         return("success");
@@ -419,6 +419,7 @@ module.exports = function (file) {
       const select = this.db.prepare(
         "SELECT * FROM Bookings WHERE Start > ? AND Typ = 'automatic';"
       )
+      console.log(select.get(timestamp))
       let ergebnis = select.get(timestamp)
       if(ergebnis === undefined) return false;
       else return true

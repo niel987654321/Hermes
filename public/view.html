@@ -31,7 +31,11 @@
         <div class="days" id="days">
         </div>
         <div id="anzeige">
-            <input id="Typ">
+            <input id="Typ" list="laender">
+            <datalist id="laender">
+                <option value="Arbeiten">
+                <option value="Ferien">
+            </datalist>
             <input type="datetime-local" id="Start">
             <input type="datetime-local" id="End">
             <button id="delete">delete</button>
