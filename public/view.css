@@ -216,3 +216,7 @@ button:hover {
 #CurrentTime {
     font-weight: 1000;
 }
+
+#divAnzeigen{
+    overflow: scroll;
+}
